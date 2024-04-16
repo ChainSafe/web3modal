@@ -3,7 +3,7 @@ import { Web3Modal } from '../src/client.js'
 import { ConstantsUtil } from '@web3modal/scaffold-utils'
 import { getWeb3Modal } from '@web3modal/scaffold-vue'
 import { onUnmounted, ref } from 'vue'
-import type { Eip1193Provider } from 'web3'
+import type { EIP1193Provider, EthExecutionAPI } from 'web3'
 // -- Types -------------------------------------------------------------------
 export type { Web3ModalOptions } from '../src/client.js'
 
@@ -28,11 +28,13 @@ export function useWeb3ModalProvider() {
     throw new Error('Please call "createWeb3Modal" before using "useWeb3ModalProvider" composition')
   }
 
-  const walletProvider = ref(modal.getWalletProvider())
+  const walletProvider = ref(
+    modal.getWalletProvider() as EIP1193Provider<EthExecutionAPI> | undefined
+  )
   const walletProviderType = ref(modal.getWalletProviderType())
 
   const unsubscribe = modal.subscribeProvider(state => {
-    walletProvider.value = state.provider as Eip1193Provider | undefined
+    walletProvider.value = state.provider as EIP1193Provider<EthExecutionAPI> | undefined
     walletProviderType.value = state.providerType
   })
 
@@ -76,7 +78,7 @@ export function useWeb3ModalAccount() {
   const chainId = ref(modal.getChainId())
 
   const unsubscribe = modal.subscribeProvider(state => {
-    address.value = state.address as string
+    address.value = state.address
     isConnected.value = state.isConnected
     chainId.value = state.chainId
   })

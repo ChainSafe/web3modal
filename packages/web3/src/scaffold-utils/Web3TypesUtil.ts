@@ -3,9 +3,11 @@
 import type { W3mFrameProvider } from '@web3modal/wallet'
 
 export interface IWeb3Config {
-  providers: ProviderType
-  defaultChain?: number
-  SSR?: boolean
+  provider: ProviderType
+  metadata: Metadata
+
+  //  defaultChain?: number
+  //  SSR?: boolean
 }
 
 export type Address = `0x${string}`
@@ -39,10 +41,26 @@ export type Metadata = {
 
 export type CombinedProvider = W3mFrameProvider & Provider
 
+// @TODO: the commented out type below is the one used with ethers. The one next is the one used with viem.
+// double check before deleting the commented out type
+
+// export type Chain = {
+//   rpcUrl: string
+//   explorerUrl: string
+//   currency: string
+//   name: string
+//   chainId: number
+// }
+
 export type Chain = {
-  rpcUrl: string
-  explorerUrl: string
-  currency: string
-  name: string
   chainId: number
+  blockExplorerUrls?: string[]
+  chainName: string
+  iconUrls?: string[]
+  nativeCurrency: {
+    decimals: number
+    name?: string
+    symbol: string
+  }
+  rpcUrls: string[]
 }

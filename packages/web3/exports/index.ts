@@ -3,6 +3,9 @@ import { Web3Modal } from '../src/client.js'
 import { ConstantsUtil } from '@web3modal/scaffold-utils'
 
 export type { Web3Modal, Web3ModalOptions } from '../src/client.js'
+
+export * from '../src/scaffold-utils/index.js'
+
 export { defaultConfig } from '../src/utils/defaultConfig.js'
 
 export function createWeb3Modal(options: Web3ModalOptions) {
