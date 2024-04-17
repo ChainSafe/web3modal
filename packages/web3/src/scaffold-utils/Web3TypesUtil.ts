@@ -41,16 +41,16 @@ export type Metadata = {
 
 export type CombinedProvider = W3mFrameProvider & Provider
 
-// @TODO: the commented out type below is the one used with ethers. The one next is the one used with viem.
-// double check before deleting the commented out type
+// Note: the type below is the one used with ethers. The one next is the one used with viem.
+// We want to support both. But we recommend using `Chain` instead of `SimpleChain`.
 
-// export type Chain = {
-//   rpcUrl: string
-//   explorerUrl: string
-//   currency: string
-//   name: string
-//   chainId: number
-// }
+export type SimpleChain = {
+  rpcUrl: string
+  explorerUrl: string
+  currency: string
+  name: string
+  chainId: number
+}
 
 export type Chain = {
   chainId: number
@@ -63,4 +63,29 @@ export type Chain = {
     symbol: string
   }
   rpcUrls: string[]
+}
+
+export function ensureChainType(chains: Chain[] | SimpleChain[]): Chain[] {
+  let consolidatedChains = chains.map(ch => {
+    const asSimpleChain = ch as SimpleChain
+    const chain = ch as Chain
+    if (asSimpleChain.currency) {
+      chain.nativeCurrency = {
+        name: asSimpleChain.currency,
+        decimals: 18,
+        symbol: asSimpleChain.currency
+      }
+    }
+    if (asSimpleChain.explorerUrl) {
+      chain.blockExplorerUrls = [asSimpleChain.explorerUrl]
+    }
+    if (asSimpleChain.rpcUrl) {
+      chain.rpcUrls = [asSimpleChain.rpcUrl]
+    }
+    if (asSimpleChain.name) {
+      chain.chainName = asSimpleChain.name
+    }
+    return chain
+  })
+  return consolidatedChains as Chain[]
 }

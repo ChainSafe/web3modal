@@ -54,15 +54,16 @@
     "valtio": "1.11.2"
   },
   "peerDependencies": {
-    "web3": ">=4.0.0",
     "react": ">=17",
     "react-dom": ">=17",
-    "vue": ">=3"
+    "vue": ">=3",
+    "web3": ">=4.0.0"
   },
   "devDependencies": {
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "vue": "3.4.3"
+    "vue": "3.4.3",
+    "pino-pretty": "^11.0.0"
   },
   "peerDependenciesMeta": {
     "react": {

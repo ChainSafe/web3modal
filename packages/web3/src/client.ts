@@ -15,12 +15,14 @@ import { ConstantsUtil, PresetsUtil, HelpersUtil } from '@web3modal/scaffold-uti
 import EthereumProvider from '@walletconnect/ethereum-provider'
 import type { Web3ModalSIWEClient } from '@web3modal/siwe'
 import type { Address } from './utils/types.js'
-import type {
-  Metadata,
-  Provider,
-  ProviderType,
-  Chain,
-  CombinedProvider
+import {
+  type Metadata,
+  type Provider,
+  type ProviderType,
+  type Chain,
+  type SimpleChain,
+  type CombinedProvider,
+  ensureChainType
 } from './scaffold-utils/Web3TypesUtil.js'
 import type { Web3StoreUtilState } from './scaffold-utils/Web3StoreUtil.js'
 import { Web3 } from 'web3'
@@ -35,7 +37,7 @@ import { NetworkUtil } from '@web3modal/common'
 // -- Types ---------------------------------------------------------------------
 export interface Web3ModalClientOptions extends Omit<LibraryOptions, 'defaultChain' | 'tokens'> {
   web3Config: ProviderType
-  chains: Chain[]
+  chains: Chain[] | SimpleChain[]
   siweConfig?: Web3ModalSIWEClient
   defaultChain?: Chain
   chainImages?: Record<number, string>
@@ -303,7 +305,8 @@ export class Web3Modal extends Web3ModalScaffold {
     this.metadata = web3Config.metadata
 
     this.projectId = w3mOptions.projectId
-    this.chains = chains
+
+    this.chains = ensureChainType(chains)
 
     this.createProvider()
 
@@ -470,7 +473,7 @@ export class Web3Modal extends Web3ModalScaffold {
       chain =>
         ({
           id: `${ConstantsUtil.EIP155}:${chain.chainId}`,
-          name: chain.chainName,
+          name: (chain as Chain).chainName || (chain as SimpleChain).name,
           imageId: PresetsUtil.EIP155NetworkImageIds[chain.chainId],
           imageUrl: chainImages?.[chain.chainId]
         }) as CaipNetwork
