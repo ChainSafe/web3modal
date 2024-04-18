@@ -3,7 +3,7 @@
 import type { Web3ModalOptions } from '../src/client.js'
 import { Web3Modal } from '../src/client.js'
 import { ConstantsUtil } from '@web3modal/scaffold-utils'
-import { EthersStoreUtil as Web3StoreUtil } from '@web3modal/scaffold-utils/ethers'
+import { Web3StoreUtil } from '../src/scaffold-utils/Web3StoreUtil.js'
 import { getWeb3Modal } from '@web3modal/scaffold-react'
 import { useSnapshot } from 'valtio'
 import type { EIP1193Provider } from 'web3'
