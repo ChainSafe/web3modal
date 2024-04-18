@@ -68,6 +68,6 @@ export const abi = [
     stateMutability: 'view',
     type: 'function'
   }
-]
+] as const
 
 export const address = '0xfcfCFD8D9f4A23D8DD11b03b212B69262A3ba1b8'

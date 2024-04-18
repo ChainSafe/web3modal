@@ -1,7 +1,10 @@
 import { Button, useToast, Stack, Link, Text, Spacer } from '@chakra-ui/react'
 import { useWeb3ModalAccount, useWeb3ModalProvider } from '@web3modal/web3/react'
-//@todo update import and logic
-import { BrowserProvider, JsonRpcSigner, ethers } from 'ethers'
+import {
+  // @TODO consider using this code instead of the next line
+  utils as web3Utils, // eth, Web3Context, ETH_DATA_FORMAT,
+  Web3
+} from 'web3'
 import { sepolia, optimism } from '../../utils/ChainsUtil'
 import { useState } from 'react'
 import { vitalikEthAddress } from '../../utils/DataUtil'
@@ -18,13 +21,20 @@ export function Web3TransactionTest() {
       if (!walletProvider || !address) {
         throw Error('user is disconnected')
       }
-      const provider = new BrowserProvider(walletProvider, chainId)
-      const signer = new JsonRpcSigner(provider, address)
-      const tx = await signer.sendTransaction({
+
+      const web3 = new Web3({ provider: walletProvider, config: { defaultNetworkId: chainId } })
+      const tx = await web3.eth.sendTransaction({
+        from: address,
         to: vitalikEthAddress,
-        value: ethers.parseUnits('0.0001', 'gwei')
+        value: web3Utils.toWei('0.0001', 'ether')
       })
-      toast({ title: 'Succcess', description: tx.hash, status: 'success', isClosable: true })
+
+      toast({
+        title: 'Success',
+        description: tx.transactionHash,
+        status: 'success',
+        isClosable: true
+      })
     } catch {
       toast({
         title: 'Error',

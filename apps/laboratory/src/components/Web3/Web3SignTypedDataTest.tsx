@@ -1,11 +1,30 @@
 import { Button, useToast } from '@chakra-ui/react'
 import { useWeb3ModalAccount, useWeb3ModalProvider } from '@web3modal/web3/react'
-//@todo update import and logic
-import { BrowserProvider, JsonRpcSigner } from 'ethers'
-//@todo update import and logic
-import type { TypedDataField } from 'ethers'
+import {
+  // @TODO consider using this code instead of the next line
+  // utils, eth, Web3Context, ETH_DATA_FORMAT,
+  Web3
+} from 'web3'
 
-const types: Record<string, TypedDataField[]> = {
+const types = {
+  EIP712Domain: [
+    {
+      name: 'name',
+      type: 'string'
+    },
+    {
+      name: 'version',
+      type: 'string'
+    },
+    {
+      name: 'chainId',
+      type: 'uint256'
+    },
+    {
+      name: 'verifyingContract',
+      type: 'address'
+    }
+  ],
   Person: [
     { name: 'name', type: 'string' },
     { name: 'wallet', type: 'address' }
@@ -27,7 +46,7 @@ const message = {
     wallet: '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB'
   },
   contents: 'Hello, Bob!'
-} as const
+}
 
 export function Web3SignTypedDataTest() {
   const toast = useToast()
@@ -39,16 +58,20 @@ export function Web3SignTypedDataTest() {
       if (!walletProvider || !address) {
         throw Error('user is disconnected')
       }
-      const provider = new BrowserProvider(walletProvider, chainId)
-      const signer = new JsonRpcSigner(provider, address)
       const domain = {
         name: 'Ether Mail',
         version: '1',
-        chainId,
+        chainId: (chainId as number)?.toString(),
         verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC'
       } as const
 
-      const signature = await signer?.signTypedData(domain, types, message)
+      const web3 = new Web3({ provider: walletProvider, config: { defaultNetworkId: chainId } })
+      const signature = await web3.eth.signTypedData(address, {
+        primaryType: 'Mail',
+        domain,
+        types,
+        message
+      })
 
       toast({ title: 'Succcess', description: signature, status: 'success', isClosable: true })
     } catch {
