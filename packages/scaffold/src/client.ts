@@ -118,7 +118,7 @@ export class Web3ModalScaffold {
   }
 
   public getState() {
-    return { ...PublicStateController.state }
+    return PublicStateController.state
   }
 
   public subscribeState(callback: (newState: PublicStateControllerState) => void) {
@@ -154,10 +154,6 @@ export class Web3ModalScaffold {
 
   protected setBalance: (typeof AccountController)['setBalance'] = (balance, balanceSymbol) => {
     AccountController.setBalance(balance, balanceSymbol)
-  }
-
-  protected fetchTokenBalance = () => {
-    AccountController.fetchTokenBalance()
   }
 
   protected setProfileName: (typeof AccountController)['setProfileName'] = profileName => {
