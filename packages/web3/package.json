@@ -1,6 +1,6 @@
 {
   "name": "@web3modal/web3",
-  "version": "4.1.8",
+  "version": "4.1.9",
   "type": "module",
   "main": "./dist/esm/exports/index.js",
   "types": "./dist/types/exports/index.d.ts",
@@ -45,12 +45,12 @@
   "dependencies": {
     "@coinbase/wallet-sdk": "3.9.1",
     "@walletconnect/ethereum-provider": "2.11.1",
-    "@web3modal/polyfills": "4.1.7",
-    "@web3modal/scaffold": "4.1.7",
-    "@web3modal/scaffold-react": "4.1.7",
-    "@web3modal/scaffold-utils": "4.1.7",
-    "@web3modal/scaffold-vue": "4.1.7",
-    "@web3modal/siwe": "4.1.7",
+    "@web3modal/polyfills": "4.1.9",
+    "@web3modal/scaffold": "4.1.9",
+    "@web3modal/scaffold-react": "4.1.9",
+    "@web3modal/scaffold-utils": "4.1.9",
+    "@web3modal/scaffold-vue": "4.1.9",
+    "@web3modal/siwe": "4.1.9",
     "valtio": "1.11.2"
   },
   "peerDependencies": {
@@ -62,8 +62,7 @@
   "devDependencies": {
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "vue": "3.4.3",
-    "pino-pretty": "^11.0.0"
+    "vue": "3.4.3"
   },
   "peerDependenciesMeta": {
     "react": {
