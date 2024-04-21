@@ -908,18 +908,28 @@ export class Web3Modal extends Web3ModalScaffold {
     if (chainId === 1) {
       // @TODO: refactor to possibly use Infura
       const web3 = new Web3('https://eth.llamarpc.com')
-      const name = await web3.eth.ens.getName(address)
-      const avatar = await web3.eth.ens.getText(address, 'avatar')
 
-      if (name) {
-        this.setProfileName(name)
+      try {
+        const name = await web3.eth.ens.getName(address)
+        if (name) {
+          this.setProfileName(name)
+        } else {
+          this.setProfileName(null)
+        }
+      } catch {
+        this.setProfileName(null)
       }
-      if (avatar) {
-        this.setProfileImage(avatar)
+
+      try {
+        const avatar = await web3.eth.ens.getText(address, 'avatar')
+        if (avatar) {
+          this.setProfileImage(avatar)
+        } else {
+          this.setProfileImage(null)
+        }
+      } catch {
+        this.setProfileImage(null)
       }
-    } else {
-      this.setProfileName(null)
-      this.setProfileImage(null)
     }
   }
 
