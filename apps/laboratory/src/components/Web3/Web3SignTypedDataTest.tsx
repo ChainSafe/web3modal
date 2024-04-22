@@ -1,8 +1,7 @@
 import { Button, useToast } from '@chakra-ui/react'
 import { useWeb3ModalAccount, useWeb3ModalProvider } from '@web3modal/web3/react'
 import {
-  // @TODO consider using this code instead of the next line
-  // utils, eth, Web3Context, ETH_DATA_FORMAT,
+  // @TODO consider using this code instead of the next line: utils, eth, Web3Context, ETH_DATA_FORMAT,
   Web3
 } from 'web3'
 
@@ -61,7 +60,7 @@ export function Web3SignTypedDataTest() {
       const domain = {
         name: 'Ether Mail',
         version: '1',
-        chainId: (chainId as number)?.toString(),
+        chainId: chainId ? chainId?.toString() : '1',
         verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC'
       } as const
 

@@ -1,14 +1,14 @@
 import { Button, useToast, Stack, Link, Text, Spacer } from '@chakra-ui/react'
 import { useWeb3ModalAccount, useWeb3ModalProvider } from '@web3modal/web3/react'
 import {
-  // @TODO consider using this code instead of the next line
-  utils as web3Utils, // eth, Web3Context, ETH_DATA_FORMAT,
+  utils as web3Utils,
+  // @TODO consider using this code instead of the next line: eth, Web3Context, ETH_DATA_FORMAT,
   Web3
 } from 'web3'
 import { optimism, sepolia } from '../../utils/ChainsUtil'
 import { useState } from 'react'
 
-import { abi, address as donutAddress } from '../../utils/DonutContract'
+import { constAbi, address as donutAddress } from '../../utils/DonutContract'
 
 export function Web3WriteContractTest() {
   const toast = useToast()
@@ -24,7 +24,7 @@ export function Web3WriteContractTest() {
       }
 
       const web3 = new Web3({ provider: walletProvider, config: { defaultNetworkId: chainId } })
-      const contract = new web3.eth.Contract(abi, donutAddress)
+      const contract = new web3.eth.Contract(constAbi, donutAddress)
 
       const tx = await contract.methods
         .purchase(1, { value: web3Utils.toWei('0.0001', 'ether') })
