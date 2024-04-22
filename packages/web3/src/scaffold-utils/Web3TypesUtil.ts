@@ -67,7 +67,7 @@ export type Chain = {
 
 export function ensureChainType(chains: Chain[] | SimpleChain[]): Chain[] {
   let consolidatedChains = chains.map(ch => {
-    const asSimpleChain = ch as SimpleChain
+    const asSimpleChain: Partial<SimpleChain> = ch as SimpleChain
     const chain = ch as Chain
     if (asSimpleChain.currency) {
       chain.nativeCurrency = {
@@ -75,15 +75,19 @@ export function ensureChainType(chains: Chain[] | SimpleChain[]): Chain[] {
         decimals: 18,
         symbol: asSimpleChain.currency
       }
+      delete asSimpleChain.currency
     }
     if (asSimpleChain.explorerUrl) {
       chain.blockExplorerUrls = [asSimpleChain.explorerUrl]
+      delete asSimpleChain.explorerUrl
     }
     if (asSimpleChain.rpcUrl) {
       chain.rpcUrls = [asSimpleChain.rpcUrl]
+      delete asSimpleChain.rpcUrl
     }
     if (asSimpleChain.name) {
       chain.chainName = asSimpleChain.name
+      delete asSimpleChain.name
     }
     return chain
   })

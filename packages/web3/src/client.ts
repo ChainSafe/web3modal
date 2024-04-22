@@ -999,9 +999,9 @@ export class Web3Modal extends Web3ModalScaffold {
         if (WalletConnectProvider) {
           try {
             this.web3Wallet.web3.setProvider(WalletConnectProvider)
-            await this.web3Wallet.web3.switchEthereumChain(
-              this.web3Wallet.web3.utils.toHex(chainId)
-            )
+            await this.web3Wallet.web3.switchEthereumChain({
+              chainId: this.web3Wallet.web3.utils.toHex(chainId)
+            })
             Web3StoreUtil.setChainId(chainId)
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
           } catch (switchError: any) {
@@ -1009,9 +1009,13 @@ export class Web3Modal extends Web3ModalScaffold {
               switchError.code === Web3ConstantsUtil.ERROR_CODE_UNRECOGNIZED_CHAIN_ID ||
               switchError.code === Web3ConstantsUtil.ERROR_CODE_DEFAULT ||
               switchError?.data?.originalError?.code ===
-                Web3ConstantsUtil.ERROR_CODE_UNRECOGNIZED_CHAIN_ID
+                Web3ConstantsUtil.ERROR_CODE_UNRECOGNIZED_CHAIN_ID||
+                switchError?.innerError?.code === Web3ConstantsUtil.ERROR_CODE_UNRECOGNIZED_CHAIN_ID
             ) {
-              await this.web3Wallet.web3.addEthereumChain(chain)
+              await this.web3Wallet.web3.addEthereumChain({
+                ...chain,
+                chainId: this.web3Wallet.web3.utils.toHex(chainId)
+              } as any)
             } else {
               throw new Error('Chain is not supported')
             }
@@ -1022,9 +1026,9 @@ export class Web3Modal extends Web3ModalScaffold {
         if (InjectedProvider) {
           try {
             this.web3Wallet.web3.setProvider(InjectedProvider)
-            await this.web3Wallet.web3.switchEthereumChain(
-              this.web3Wallet.web3.utils.toHex(chainId)
-            )
+            await this.web3Wallet.web3.switchEthereumChain({
+              chainId: this.web3Wallet.web3.utils.toHex(chainId)
+            })
             Web3StoreUtil.setChainId(chain.chainId)
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
           } catch (switchError: any) {
@@ -1032,9 +1036,13 @@ export class Web3Modal extends Web3ModalScaffold {
               switchError.code === Web3ConstantsUtil.ERROR_CODE_UNRECOGNIZED_CHAIN_ID ||
               switchError.code === Web3ConstantsUtil.ERROR_CODE_DEFAULT ||
               switchError?.data?.originalError?.code ===
-                Web3ConstantsUtil.ERROR_CODE_UNRECOGNIZED_CHAIN_ID
+                Web3ConstantsUtil.ERROR_CODE_UNRECOGNIZED_CHAIN_ID||
+                switchError?.innerError?.code === Web3ConstantsUtil.ERROR_CODE_UNRECOGNIZED_CHAIN_ID
             ) {
-              await this.web3Wallet.web3.addEthereumChain(chain)
+              await this.web3Wallet.web3.addEthereumChain({
+                ...chain,
+                chainId: this.web3Wallet.web3.utils.toHex(chainId)
+              } as any)
             } else {
               throw new Error('Chain is not supported')
             }
@@ -1045,9 +1053,9 @@ export class Web3Modal extends Web3ModalScaffold {
         if (EIP6963Provider) {
           try {
             this.web3Wallet.web3.setProvider(EIP6963Provider)
-            await this.web3Wallet.web3.switchEthereumChain(
-              this.web3Wallet.web3.utils.toHex(chainId)
-            )
+            await this.web3Wallet.web3.switchEthereumChain({
+              chainId: this.web3Wallet.web3.utils.toHex(chainId)
+            })
             Web3StoreUtil.setChainId(chain.chainId)
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
           } catch (switchError: any) {
@@ -1055,9 +1063,13 @@ export class Web3Modal extends Web3ModalScaffold {
               switchError.code === Web3ConstantsUtil.ERROR_CODE_UNRECOGNIZED_CHAIN_ID ||
               switchError.code === Web3ConstantsUtil.ERROR_CODE_DEFAULT ||
               switchError?.data?.originalError?.code ===
-                Web3ConstantsUtil.ERROR_CODE_UNRECOGNIZED_CHAIN_ID
+                Web3ConstantsUtil.ERROR_CODE_UNRECOGNIZED_CHAIN_ID||
+                switchError?.innerError?.code === Web3ConstantsUtil.ERROR_CODE_UNRECOGNIZED_CHAIN_ID
             ) {
-              await this.web3Wallet.web3.addEthereumChain(chain)
+              await this.web3Wallet.web3.addEthereumChain({
+                ...chain,
+                chainId: this.web3Wallet.web3.utils.toHex(chainId)
+              } as any)
             } else {
               throw new Error('Chain is not supported')
             }
@@ -1068,9 +1080,9 @@ export class Web3Modal extends Web3ModalScaffold {
         if (CoinbaseProvider) {
           try {
             this.web3Wallet.web3.setProvider(CoinbaseProvider)
-            await this.web3Wallet.web3.switchEthereumChain(
-              this.web3Wallet.web3.utils.toHex(chainId)
-            )
+            await this.web3Wallet.web3.switchEthereumChain({
+              chainId: this.web3Wallet.web3.utils.toHex(chainId)
+            })
             Web3StoreUtil.setChainId(chain.chainId)
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
           } catch (switchError: any) {
@@ -1078,12 +1090,16 @@ export class Web3Modal extends Web3ModalScaffold {
               switchError.code === Web3ConstantsUtil.ERROR_CODE_UNRECOGNIZED_CHAIN_ID ||
               switchError.code === Web3ConstantsUtil.ERROR_CODE_DEFAULT ||
               switchError?.data?.originalError?.code ===
-                Web3ConstantsUtil.ERROR_CODE_UNRECOGNIZED_CHAIN_ID
+                Web3ConstantsUtil.ERROR_CODE_UNRECOGNIZED_CHAIN_ID||
+                switchError?.innerError?.code === Web3ConstantsUtil.ERROR_CODE_UNRECOGNIZED_CHAIN_ID
             ) {
-              await this.web3Wallet.web3.addEthereumChain(chain)
+              await this.web3Wallet.web3.addEthereumChain({
+                ...chain,
+                chainId: this.web3Wallet.web3.utils.toHex(chainId)
+              } as any)
             } else {
               // @TODO: do we need to throw an error here?
-              // throw new Error('Chain is not supported')
+              throw new Error('Chain is not supported')
             }
           }
         }

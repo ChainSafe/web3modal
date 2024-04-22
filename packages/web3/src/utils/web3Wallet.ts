@@ -3,7 +3,7 @@ import { type SupportedProviders } from 'web3'
 import type { Chain } from '../scaffold-utils/Web3TypesUtil'
 
 type ExtendedWeb3 = Web3 & {
-  switchEthereumChain(chainId: String): Promise<null>
+  switchEthereumChain(params: { chainId: String }): Promise<null>
   addEthereumChain(chain: Chain): Promise<null>
 }
 
