@@ -272,12 +272,14 @@ export class Web3Modal extends Web3ModalScaffold {
         if (!provider) {
           throw new Error('connectionControllerClient:signMessage - provider is undefined')
         }
+        this.web3Wallet.web3.setProvider(provider)
         if (typeof Web3StoreUtil.state.address === 'string') {
-          const s = await this.web3Wallet.web3.eth.sign(message, Web3StoreUtil.state.address)
-          if (typeof s === 'string') return s
-          else {
-            return s.signature
-          }
+          const signature = await this.web3Wallet.web3.eth.personal.sign(
+            message,
+            Web3StoreUtil.state.address,
+            ''
+          )
+          return signature
         } else {
           // @TODO: consider using
           // const signature = await provider.request({
