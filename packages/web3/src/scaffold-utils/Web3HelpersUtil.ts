@@ -3,7 +3,7 @@
 import type { CaipNetwork } from '@web3modal/core'
 import { ConstantsUtil } from '@web3modal/scaffold-utils'
 import { PresetsUtil } from '@web3modal/scaffold-utils'
-import type { Chain, Provider } from './Web3TypesUtil.js'
+import type { Address, Chain, Provider } from './Web3TypesUtil.js'
 
 export const Web3HelpersUtil = {
   getCaipDefaultChain(chain?: Chain) {
@@ -13,7 +13,7 @@ export const Web3HelpersUtil = {
 
     return {
       id: `${ConstantsUtil.EIP155}:${chain.chainId}`,
-      name: chain.name,
+      name: chain.chainName,
       imageId: PresetsUtil.EIP155NetworkImageIds[chain.chainId]
     } as CaipNetwork
   },
@@ -42,7 +42,7 @@ export const Web3HelpersUtil = {
   async getAddress(provider: Provider) {
     const [address] = await provider.request<string[]>({ method: 'eth_accounts' })
 
-    return address
+    return address as Address
   },
   async addEthereumChain(provider: Provider, chain: Chain) {
     await provider.request({
@@ -50,14 +50,14 @@ export const Web3HelpersUtil = {
       params: [
         {
           chainId: Web3HelpersUtil.numberToHexString(chain.chainId),
-          rpcUrls: [chain.rpcUrl],
-          chainName: chain.name,
+          rpcUrls: chain.rpcUrls,
+          chainName: chain.chainName,
           nativeCurrency: {
-            name: chain.currency,
+            name: chain.nativeCurrency.name,
             decimals: 18,
-            symbol: chain.currency
+            symbol: chain.nativeCurrency.symbol
           },
-          blockExplorerUrls: [chain.explorerUrl],
+          blockExplorerUrls: chain.blockExplorerUrls,
           iconUrls: [PresetsUtil.EIP155NetworkImageIds[chain.chainId]]
         }
       ]

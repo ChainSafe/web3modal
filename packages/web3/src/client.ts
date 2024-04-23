@@ -14,40 +14,36 @@ import { Web3ModalScaffold } from '@web3modal/scaffold'
 import { ConstantsUtil, PresetsUtil, HelpersUtil } from '@web3modal/scaffold-utils'
 import EthereumProvider from '@walletconnect/ethereum-provider'
 import type { Web3ModalSIWEClient } from '@web3modal/siwe'
-import type {
-  Address,
-  Metadata,
-  Provider,
-  ProviderType,
-  Chain,
-  EthersStoreUtilState as Web3StoreUtilState
-} from '@web3modal/scaffold-utils/ethers'
+import type { Address } from './utils/types.js'
 import {
-  formatEther,
-  JsonRpcProvider,
-  InfuraProvider,
-  getAddress as getOriginalAddress
-} from 'web3'
-import {
-  EthersConstantsUtil as Web3ConstantsUtil,
-  EthersHelpersUtil as Web3HelpersUtil,
-  EthersStoreUtil as Web3StoreUtil
-} from '@web3modal/scaffold-utils/ethers'
+  type Metadata,
+  type Provider,
+  type ProviderType,
+  type Chain,
+  type SimpleChain,
+  type CombinedProvider,
+  ensureChainType
+} from './scaffold-utils/Web3TypesUtil.js'
+import type { Web3StoreUtilState } from './scaffold-utils/Web3StoreUtil.js'
+import { Web3 } from 'web3'
+import { Web3ConstantsUtil } from './scaffold-utils/Web3ConstantsUtil.js'
+import { Web3HelpersUtil } from './scaffold-utils/Web3HelpersUtil.js'
+import { Web3StoreUtil } from './scaffold-utils/Web3StoreUtil.js'
 import type { EthereumProviderOptions } from '@walletconnect/ethereum-provider'
-import type { Eip1193Provider } from 'web3'
+import type { Eip1193Compatible } from 'web3'
 import { W3mFrameProvider, W3mFrameHelpers, W3mFrameRpcConstants } from '@web3modal/wallet'
-import type { CombinedProvider } from '@web3modal/scaffold-utils/ethers'
+import { Web3Wallet } from './utils/web3Wallet.js'
 import { NetworkUtil } from '@web3modal/common'
-
 // -- Types ---------------------------------------------------------------------
 export interface Web3ModalClientOptions extends Omit<LibraryOptions, 'defaultChain' | 'tokens'> {
   web3Config: ProviderType
-  chains: Chain[]
+  chains: Chain[] | SimpleChain[]
   siweConfig?: Web3ModalSIWEClient
   defaultChain?: Chain
   chainImages?: Record<number, string>
   connectorImages?: Record<string, string>
   tokens?: Record<number, Token>
+  enableSmartAccounts?: boolean
 }
 
 export type Web3ModalOptions = Omit<Web3ModalClientOptions, '_sdkVersion'>
@@ -79,9 +75,15 @@ interface ExternalProvider extends EthereumProvider {
   _addresses?: string[]
 }
 
+// -- Utils --------------------------------------------------------------------
+
+const getOriginalAddress = (address: string) => Web3.utils.toChecksumAddress(address) as Address
+
 // -- Client --------------------------------------------------------------------
 export class Web3Modal extends Web3ModalScaffold {
   private hasSyncedConnectedAccount = false
+
+  private web3Wallet: Web3Wallet
 
   private EIP6963Providers: EIP6963ProviderDetail[] = []
 
@@ -196,19 +198,22 @@ export class Web3Modal extends Web3ModalScaffold {
           }
           try {
             Web3StoreUtil.setError(undefined)
-            await InjectedProvider.request({ method: 'eth_requestAccounts' })
+            // @TODO consider directly calling: `await provider.request({ method: 'eth_requestAccounts' })`
+            this.web3Wallet.web3.setProvider(InjectedProvider)
+            await this.web3Wallet.web3.eth.getAccounts()
             this.setInjectedProvider(web3Config)
           } catch (error) {
-            Web3StoreUtil.setError(error)
+            // set error
           }
         } else if (id === ConstantsUtil.EIP6963_CONNECTOR_ID && info && provider) {
           try {
             Web3StoreUtil.setError(undefined)
-            await provider.request({ method: 'eth_requestAccounts' })
-            this.setEIP6963Provider(provider, info.name)
-          } catch (error) {
-            Web3StoreUtil.setError(error)
-          }
+            const EIP6963Provider = provider
+            // @TODO consider directly calling: `await provider.request({ method: 'eth_requestAccounts' })`
+            this.web3Wallet.web3.setProvider(EIP6963Provider)
+            await this.web3Wallet.web3.eth.getAccounts()
+            this.setEIP6963Provider(EIP6963Provider, info.name)
+          } catch (error) {}
         } else if (id === ConstantsUtil.COINBASE_CONNECTOR_ID) {
           const CoinbaseProvider = web3Config.coinbase
           if (!CoinbaseProvider) {
@@ -217,7 +222,9 @@ export class Web3Modal extends Web3ModalScaffold {
 
           try {
             Web3StoreUtil.setError(undefined)
-            await CoinbaseProvider.request({ method: 'eth_requestAccounts' })
+            // @TODO consider directly calling: `await provider.request({ method: 'eth_requestAccounts' })`
+            this.web3Wallet.web3.setProvider(CoinbaseProvider)
+            await this.web3Wallet.web3.eth.getAccounts()
             this.setCoinbaseProvider(web3Config)
           } catch (error) {
             Web3StoreUtil.setError(error)
@@ -265,13 +272,24 @@ export class Web3Modal extends Web3ModalScaffold {
         if (!provider) {
           throw new Error('connectionControllerClient:signMessage - provider is undefined')
         }
+        this.web3Wallet.web3.setProvider(provider)
+        if (typeof Web3StoreUtil.state.address === 'string') {
+          const signature = await this.web3Wallet.web3.eth.personal.sign(
+            message,
+            Web3StoreUtil.state.address,
+            ''
+          )
+          return signature
+        } else {
+          // @TODO: consider using
+          // const signature = await provider.request({
+          //   method: 'personal_sign',
+          //   params: [message, this.getAddress()]
+          // })
 
-        const signature = await provider.request({
-          method: 'personal_sign',
-          params: [message, this.getAddress()]
-        })
-
-        return signature as `0x${string}`
+          // return signature as `0x${string}`
+          throw new Error('cant sign message')
+        }
       }
     }
 
@@ -284,13 +302,13 @@ export class Web3Modal extends Web3ModalScaffold {
       _sdkVersion: _sdkVersion ?? `html-web3-${ConstantsUtil.VERSION}`,
       ...w3mOptions
     })
-
-    this.options = options
+    this.web3Wallet = new Web3Wallet('')
 
     this.metadata = web3Config.metadata
 
     this.projectId = w3mOptions.projectId
-    this.chains = chains
+
+    this.chains = ensureChainType(chains)
 
     this.createProvider()
 
@@ -347,7 +365,7 @@ export class Web3Modal extends Web3ModalScaffold {
   }
 
   public setAddress(address?: string) {
-    const originalAddress = address ? (getOriginalAddress(address) as Address) : undefined
+    const originalAddress = address ? getOriginalAddress(address) : undefined
     Web3StoreUtil.setAddress(originalAddress)
   }
 
@@ -370,7 +388,7 @@ export class Web3Modal extends Web3ModalScaffold {
   }
 
   public getWalletProvider() {
-    return Web3StoreUtil.state.provider as Eip1193Provider | undefined
+    return Web3StoreUtil.state.provider as Eip1193Compatible | undefined
   }
 
   public getWalletProviderType() {
@@ -417,7 +435,7 @@ export class Web3Modal extends Web3ModalScaffold {
       showQrModal: false,
       rpcMap: this.chains
         ? this.chains.reduce<Record<number, string>>((map, chain) => {
-            map[chain.chainId] = chain.rpcUrl
+            map[chain.chainId] = chain.rpcUrls[0] as string
 
             return map
           }, {})
@@ -457,7 +475,7 @@ export class Web3Modal extends Web3ModalScaffold {
       chain =>
         ({
           id: `${ConstantsUtil.EIP155}:${chain.chainId}`,
-          name: chain.name,
+          name: (chain as Chain).chainName || (chain as SimpleChain).name,
           imageId: PresetsUtil.EIP155NetworkImageIds[chain.chainId],
           imageUrl: chainImages?.[chain.chainId]
         }) as CaipNetwork
@@ -477,14 +495,12 @@ export class Web3Modal extends Web3ModalScaffold {
   }
 
   private checkActiveInjectedProvider(config: ProviderType) {
-    const InjectedProvider = config.injected
+    this.web3Wallet.web3.setProvider(config.injected)
     const walletId = localStorage.getItem(Web3ConstantsUtil.WALLET_ID)
 
-    if (InjectedProvider) {
-      if (walletId === ConstantsUtil.INJECTED_CONNECTOR_ID) {
-        this.setInjectedProvider(config)
-        this.watchInjected(config)
-      }
+    if (walletId === ConstantsUtil.INJECTED_CONNECTOR_ID && config.injected) {
+      this.setInjectedProvider(config)
+      this.watchInjected(config)
     }
   }
 
@@ -503,6 +519,13 @@ export class Web3Modal extends Web3ModalScaffold {
         }
       }
     }
+  }
+
+  // @TODO: to be updated
+  // @ts-expect-error: declared but its value is never read
+  private async disconnectHandler() {
+    localStorage.removeItem(Web3ConstantsUtil.WALLET_ID)
+    Web3StoreUtil.reset()
   }
 
   private checkActive6963Provider() {
@@ -526,7 +549,7 @@ export class Web3Modal extends Web3ModalScaffold {
     if (WalletConnectProvider) {
       Web3StoreUtil.setChainId(WalletConnectProvider.chainId)
       Web3StoreUtil.setProviderType('walletConnect')
-      Web3StoreUtil.setProvider(WalletConnectProvider as unknown as Provider)
+      Web3StoreUtil.setProvider(WalletConnectProvider as unknown as CombinedProvider)
       Web3StoreUtil.setIsConnected(true)
       this.setAddress(WalletConnectProvider.accounts?.[0])
       this.watchWalletConnect()
@@ -544,7 +567,7 @@ export class Web3Modal extends Web3ModalScaffold {
         Web3StoreUtil.setProviderType('injected')
         Web3StoreUtil.setProvider(config.injected)
         Web3StoreUtil.setIsConnected(true)
-        this.setAddress(address)
+        Web3StoreUtil.setAddress(address)
         this.watchCoinbase(config)
       }
     }
@@ -585,26 +608,21 @@ export class Web3Modal extends Web3ModalScaffold {
 
   private async setEmailProvider() {
     window?.localStorage.setItem(Web3ConstantsUtil.WALLET_ID, ConstantsUtil.EMAIL_CONNECTOR_ID)
-
     if (this.emailProvider) {
-      const preferredAccountType = W3mFrameHelpers.getPreferredAccountType()
-      const [{ address, chainId, smartAccountDeployed }, { smartAccountEnabledNetworks }] =
-        await Promise.all([
-          this.emailProvider.connect({
-            chainId: this.getChainId(),
-            preferredAccountType
-          }),
-          this.emailProvider.getSmartAccountEnabledNetworks()
-        ])
+      const { address, chainId } = await this.emailProvider.connect()
       super.setLoading(false)
       if (address && chainId) {
         Web3StoreUtil.setChainId(chainId)
         Web3StoreUtil.setProviderType(ConstantsUtil.EMAIL_CONNECTOR_ID as 'w3mEmail')
-        Web3StoreUtil.setProvider(this.emailProvider as unknown as CombinedProvider)
+        Web3StoreUtil.setProvider(this.emailProvider as CombinedProvider)
         Web3StoreUtil.setIsConnected(true)
-        Web3StoreUtil.setAddress(address as Address)
-        this.setSmartAccountDeployed(Boolean(smartAccountDeployed))
-        this.setSmartAccountEnabledNetworks(smartAccountEnabledNetworks)
+        const { isDeployed, address: smartAccountAddress } = await this.initSmartAccount(chainId)
+        this.setSmartAccountDeployed(isDeployed)
+        if (isDeployed && smartAccountAddress) {
+          Web3StoreUtil.setAddress(smartAccountAddress as Address)
+        } else {
+          Web3StoreUtil.setAddress(address as Address)
+        }
 
         this.watchEmail()
         this.watchModal()
@@ -626,7 +644,7 @@ export class Web3Modal extends Web3ModalScaffold {
 
     function chainChangedHandler(chainId: string) {
       if (chainId) {
-        const chain = Web3HelpersUtil.hexStringToNumber(chainId)
+        const chain = Number(Web3.utils.hexToNumber(chainId))
         Web3StoreUtil.setChainId(chain)
       }
     }
@@ -659,7 +677,7 @@ export class Web3Modal extends Web3ModalScaffold {
     function accountsChangedHandler(accounts: string[]) {
       const currentAccount = accounts?.[0]
       if (currentAccount) {
-        Web3StoreUtil.setAddress(getOriginalAddress(currentAccount) as Address)
+        Web3StoreUtil.setAddress(getOriginalAddress(currentAccount))
       } else {
         localStorage.removeItem(Web3ConstantsUtil.WALLET_ID)
         Web3StoreUtil.reset()
@@ -668,9 +686,8 @@ export class Web3Modal extends Web3ModalScaffold {
 
     function chainChangedHandler(chainId: string) {
       if (chainId) {
-        const chain =
-          typeof chainId === 'string' ? Web3HelpersUtil.hexStringToNumber(chainId) : Number(chainId)
-        Web3StoreUtil.setChainId(chain)
+        const chain = typeof chainId === 'string' ? Web3.utils.hexToNumber(chainId) : chainId
+        Web3StoreUtil.setChainId(Number(chain))
       }
     }
 
@@ -679,6 +696,22 @@ export class Web3Modal extends Web3ModalScaffold {
       provider.on('accountsChanged', accountsChangedHandler)
       provider.on('chainChanged', chainChangedHandler)
     }
+  }
+
+  private async initSmartAccount(
+    chainId: number
+  ): Promise<{ isDeployed: boolean; address?: string }> {
+    if (!this.emailProvider || !this.options?.enableSmartAccounts) {
+      return { isDeployed: false }
+    }
+    const { smartAccountEnabledNetworks } =
+      await this.emailProvider.getSmartAccountEnabledNetworks()
+
+    if (!smartAccountEnabledNetworks.includes(chainId)) {
+      return { isDeployed: false }
+    }
+
+    return await (this.emailProvider as any).initSmartAccount() // @TODO: to remove casting to any
   }
 
   private watchEIP6963(provider: Provider) {
@@ -694,7 +727,7 @@ export class Web3Modal extends Web3ModalScaffold {
     function accountsChangedHandler(accounts: string[]) {
       const currentAccount = accounts?.[0]
       if (currentAccount) {
-        Web3StoreUtil.setAddress(getOriginalAddress(currentAccount) as Address)
+        Web3StoreUtil.setAddress(getOriginalAddress(currentAccount))
       } else {
         localStorage.removeItem(Web3ConstantsUtil.WALLET_ID)
         Web3StoreUtil.reset()
@@ -703,9 +736,8 @@ export class Web3Modal extends Web3ModalScaffold {
 
     function chainChangedHandler(chainId: string) {
       if (chainId) {
-        const chain =
-          typeof chainId === 'string' ? Web3HelpersUtil.hexStringToNumber(chainId) : Number(chainId)
-        Web3StoreUtil.setChainId(chain)
+        const chain = typeof chainId === 'string' ? Web3.utils.hexToNumber(chainId) : chainId
+        Web3StoreUtil.setChainId(Number(chain))
       }
     }
 
@@ -732,7 +764,7 @@ export class Web3Modal extends Web3ModalScaffold {
     function accountsChangedHandler(accounts: string[]) {
       const currentAccount = accounts?.[0]
       if (currentAccount) {
-        Web3StoreUtil.setAddress(getOriginalAddress(currentAccount) as Address)
+        Web3StoreUtil.setAddress(getOriginalAddress(currentAccount))
       } else {
         localStorage.removeItem(Web3ConstantsUtil.WALLET_ID)
         Web3StoreUtil.reset()
@@ -824,7 +856,6 @@ export class Web3Modal extends Web3ModalScaffold {
       await Promise.all([
         this.syncProfile(address),
         this.syncBalance(address),
-        this.fetchTokenBalance(),
         this.getApprovedCaipNetworksData()
       ])
 
@@ -847,15 +878,15 @@ export class Web3Modal extends Web3ModalScaffold {
 
         this.setCaipNetwork({
           id: caipChainId,
-          name: chain.name,
+          name: chain.nativeCurrency.name,
           imageId: PresetsUtil.EIP155NetworkImageIds[chain.chainId],
           imageUrl: chainImages?.[chain.chainId]
         })
         if (isConnected && address) {
           const caipAddress: CaipAddress = `${ConstantsUtil.EIP155}:${chainId}:${address}`
           this.setCaipAddress(caipAddress)
-          if (chain.explorerUrl) {
-            const url = `${chain.explorerUrl}/address/${address}`
+          if (chain.blockExplorerUrls) {
+            const url = `${chain.blockExplorerUrls}/address/${address}`
             this.setAddressExplorerUrl(url)
           } else {
             this.setAddressExplorerUrl(undefined)
@@ -877,19 +908,30 @@ export class Web3Modal extends Web3ModalScaffold {
     const chainId = Web3StoreUtil.state.chainId
 
     if (chainId === 1) {
-      const ensProvider = new InfuraProvider('mainnet')
-      const name = await ensProvider.lookupAddress(address)
-      const avatar = await ensProvider.getAvatar(address)
+      // @TODO: refactor to possibly use Infura
+      const web3 = new Web3('https://eth.llamarpc.com')
 
-      if (name) {
-        this.setProfileName(name)
+      try {
+        const name = await web3.eth.ens.getName(address)
+        if (name) {
+          this.setProfileName(name)
+        } else {
+          this.setProfileName(null)
+        }
+      } catch {
+        this.setProfileName(null)
       }
-      if (avatar) {
-        this.setProfileImage(avatar)
+
+      try {
+        const avatar = await web3.eth.ens.getText(address, 'avatar')
+        if (avatar) {
+          this.setProfileImage(avatar)
+        } else {
+          this.setProfileImage(null)
+        }
+      } catch {
+        this.setProfileImage(null)
       }
-    } else {
-      this.setProfileName(null)
-      this.setProfileImage(null)
     }
   }
 
@@ -899,16 +941,17 @@ export class Web3Modal extends Web3ModalScaffold {
       const chain = this.chains.find(c => c.chainId === chainId)
 
       if (chain) {
-        const jsonRpcProvider = new JsonRpcProvider(chain.rpcUrl, {
-          chainId,
-          name: chain.name
+        const web3 = new Web3({
+          provider: chain.rpcUrls[0],
+          config: {
+            // @TODO: Double check if chainId needs to be passed here
+            defaultChain: chain.chainName
+          }
         })
-        if (jsonRpcProvider) {
-          const balance = await jsonRpcProvider.getBalance(address)
-          const formattedBalance = formatEther(balance)
+        const balance = await web3.eth.getBalance(address)
+        const formattedBalance = web3.utils.fromWei(balance, 'ether')
 
-          this.setBalance(formattedBalance, chain.currency)
-        }
+        this.setBalance(formattedBalance.toString(), chain.nativeCurrency.name)
       }
     }
   }
@@ -957,11 +1000,10 @@ export class Web3Modal extends Web3ModalScaffold {
 
         if (WalletConnectProvider) {
           try {
-            await WalletConnectProvider.request({
-              method: 'wallet_switchEthereumChain',
-              params: [{ chainId: Web3HelpersUtil.numberToHexString(chain.chainId) }]
+            this.web3Wallet.web3.setProvider(WalletConnectProvider)
+            await this.web3Wallet.web3.switchEthereumChain({
+              chainId: this.web3Wallet.web3.utils.toHex(chainId)
             })
-
             Web3StoreUtil.setChainId(chainId)
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
           } catch (switchError: any) {
@@ -969,12 +1011,13 @@ export class Web3Modal extends Web3ModalScaffold {
               switchError.code === Web3ConstantsUtil.ERROR_CODE_UNRECOGNIZED_CHAIN_ID ||
               switchError.code === Web3ConstantsUtil.ERROR_CODE_DEFAULT ||
               switchError?.data?.originalError?.code ===
-                Web3ConstantsUtil.ERROR_CODE_UNRECOGNIZED_CHAIN_ID
+                Web3ConstantsUtil.ERROR_CODE_UNRECOGNIZED_CHAIN_ID||
+                switchError?.innerError?.code === Web3ConstantsUtil.ERROR_CODE_UNRECOGNIZED_CHAIN_ID
             ) {
-              await Web3HelpersUtil.addEthereumChain(
-                WalletConnectProvider as unknown as Provider,
-                chain
-              )
+              await this.web3Wallet.web3.addEthereumChain({
+                ...chain,
+                chainId: this.web3Wallet.web3.utils.toHex(chainId)
+              } as any)
             } else {
               throw new Error('Chain is not supported')
             }
@@ -984,9 +1027,9 @@ export class Web3Modal extends Web3ModalScaffold {
         const InjectedProvider = provider
         if (InjectedProvider) {
           try {
-            await InjectedProvider.request({
-              method: 'wallet_switchEthereumChain',
-              params: [{ chainId: Web3HelpersUtil.numberToHexString(chain.chainId) }]
+            this.web3Wallet.web3.setProvider(InjectedProvider)
+            await this.web3Wallet.web3.switchEthereumChain({
+              chainId: this.web3Wallet.web3.utils.toHex(chainId)
             })
             Web3StoreUtil.setChainId(chain.chainId)
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -995,9 +1038,13 @@ export class Web3Modal extends Web3ModalScaffold {
               switchError.code === Web3ConstantsUtil.ERROR_CODE_UNRECOGNIZED_CHAIN_ID ||
               switchError.code === Web3ConstantsUtil.ERROR_CODE_DEFAULT ||
               switchError?.data?.originalError?.code ===
-                Web3ConstantsUtil.ERROR_CODE_UNRECOGNIZED_CHAIN_ID
+                Web3ConstantsUtil.ERROR_CODE_UNRECOGNIZED_CHAIN_ID||
+                switchError?.innerError?.code === Web3ConstantsUtil.ERROR_CODE_UNRECOGNIZED_CHAIN_ID
             ) {
-              await Web3HelpersUtil.addEthereumChain(InjectedProvider, chain)
+              await this.web3Wallet.web3.addEthereumChain({
+                ...chain,
+                chainId: this.web3Wallet.web3.utils.toHex(chainId)
+              } as any)
             } else {
               throw new Error('Chain is not supported')
             }
@@ -1005,12 +1052,11 @@ export class Web3Modal extends Web3ModalScaffold {
         }
       } else if (providerType === ConstantsUtil.EIP6963_CONNECTOR_ID && chain) {
         const EIP6963Provider = provider
-
         if (EIP6963Provider) {
           try {
-            await EIP6963Provider.request({
-              method: 'wallet_switchEthereumChain',
-              params: [{ chainId: Web3HelpersUtil.numberToHexString(chain.chainId) }]
+            this.web3Wallet.web3.setProvider(EIP6963Provider)
+            await this.web3Wallet.web3.switchEthereumChain({
+              chainId: this.web3Wallet.web3.utils.toHex(chainId)
             })
             Web3StoreUtil.setChainId(chain.chainId)
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1019,9 +1065,13 @@ export class Web3Modal extends Web3ModalScaffold {
               switchError.code === Web3ConstantsUtil.ERROR_CODE_UNRECOGNIZED_CHAIN_ID ||
               switchError.code === Web3ConstantsUtil.ERROR_CODE_DEFAULT ||
               switchError?.data?.originalError?.code ===
-                Web3ConstantsUtil.ERROR_CODE_UNRECOGNIZED_CHAIN_ID
+                Web3ConstantsUtil.ERROR_CODE_UNRECOGNIZED_CHAIN_ID||
+                switchError?.innerError?.code === Web3ConstantsUtil.ERROR_CODE_UNRECOGNIZED_CHAIN_ID
             ) {
-              await Web3HelpersUtil.addEthereumChain(EIP6963Provider, chain)
+              await this.web3Wallet.web3.addEthereumChain({
+                ...chain,
+                chainId: this.web3Wallet.web3.utils.toHex(chainId)
+              } as any)
             } else {
               throw new Error('Chain is not supported')
             }
@@ -1031,9 +1081,9 @@ export class Web3Modal extends Web3ModalScaffold {
         const CoinbaseProvider = provider
         if (CoinbaseProvider) {
           try {
-            await CoinbaseProvider.request({
-              method: 'wallet_switchEthereumChain',
-              params: [{ chainId: Web3HelpersUtil.numberToHexString(chain.chainId) }]
+            this.web3Wallet.web3.setProvider(CoinbaseProvider)
+            await this.web3Wallet.web3.switchEthereumChain({
+              chainId: this.web3Wallet.web3.utils.toHex(chainId)
             })
             Web3StoreUtil.setChainId(chain.chainId)
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1042,9 +1092,16 @@ export class Web3Modal extends Web3ModalScaffold {
               switchError.code === Web3ConstantsUtil.ERROR_CODE_UNRECOGNIZED_CHAIN_ID ||
               switchError.code === Web3ConstantsUtil.ERROR_CODE_DEFAULT ||
               switchError?.data?.originalError?.code ===
-                Web3ConstantsUtil.ERROR_CODE_UNRECOGNIZED_CHAIN_ID
+                Web3ConstantsUtil.ERROR_CODE_UNRECOGNIZED_CHAIN_ID||
+                switchError?.innerError?.code === Web3ConstantsUtil.ERROR_CODE_UNRECOGNIZED_CHAIN_ID
             ) {
-              await Web3HelpersUtil.addEthereumChain(CoinbaseProvider, chain)
+              await this.web3Wallet.web3.addEthereumChain({
+                ...chain,
+                chainId: this.web3Wallet.web3.utils.toHex(chainId)
+              } as any)
+            } else {
+              // @TODO: do we need to throw an error here?
+              throw new Error('Chain is not supported')
             }
           }
         }

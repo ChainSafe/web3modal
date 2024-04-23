@@ -3,9 +3,11 @@
 import type { W3mFrameProvider } from '@web3modal/wallet'
 
 export interface IWeb3Config {
-  providers: ProviderType
-  defaultChain?: number
-  SSR?: boolean
+  provider: ProviderType
+  metadata: Metadata
+
+  //  defaultChain?: number
+  //  SSR?: boolean
 }
 
 export type Address = `0x${string}`
@@ -39,10 +41,55 @@ export type Metadata = {
 
 export type CombinedProvider = W3mFrameProvider & Provider
 
-export type Chain = {
+// Note: the type below is the one used with ethers. The one next is the one used with viem.
+// We want to support both. But we recommend using `Chain` instead of `SimpleChain`.
+
+export type SimpleChain = {
   rpcUrl: string
   explorerUrl: string
   currency: string
   name: string
   chainId: number
+}
+
+export type Chain = {
+  chainId: number
+  blockExplorerUrls?: string[]
+  chainName: string
+  iconUrls?: string[]
+  nativeCurrency: {
+    decimals: number
+    name?: string
+    symbol: string
+  }
+  rpcUrls: string[]
+}
+
+export function ensureChainType(chains: Chain[] | SimpleChain[]): Chain[] {
+  let consolidatedChains = chains.map(ch => {
+    const asSimpleChain: Partial<SimpleChain> = ch as SimpleChain
+    const chain = ch as Chain
+    if (asSimpleChain.currency) {
+      chain.nativeCurrency = {
+        name: asSimpleChain.currency,
+        decimals: 18,
+        symbol: asSimpleChain.currency
+      }
+      delete asSimpleChain.currency
+    }
+    if (asSimpleChain.explorerUrl) {
+      chain.blockExplorerUrls = [asSimpleChain.explorerUrl]
+      delete asSimpleChain.explorerUrl
+    }
+    if (asSimpleChain.rpcUrl) {
+      chain.rpcUrls = [asSimpleChain.rpcUrl]
+      delete asSimpleChain.rpcUrl
+    }
+    if (asSimpleChain.name) {
+      chain.chainName = asSimpleChain.name
+      delete asSimpleChain.name
+    }
+    return chain
+  })
+  return consolidatedChains as Chain[]
 }

@@ -5,7 +5,7 @@ import { getLocalBravePath, BRAVE_LINUX_PATH } from '../constants/browsers'
 
 const availableDevices = getAvailableDevices()
 
-const LIBRARIES = ['ethers', 'wagmi', 'solana'] as const
+const LIBRARIES = ['ethers', 'web3', 'wagmi', 'solana'] as const
 
 const PERMUTATIONS = availableDevices.flatMap(device =>
   LIBRARIES.map(library => ({ device, library }))
@@ -43,6 +43,10 @@ const customProjectProperties: CustomProjectProperties = {
     testIgnore: /(?:email\.spec\.ts|smart-account\.spec\.ts).*$/u,
     useOptions: braveOptions
   },
+  'Desktop Brave/web3': {
+    testIgnore: /(?:email\.spec\.ts|smart-account\.spec\.ts).*$/u,
+    useOptions: braveOptions
+  },
   'Desktop Chrome/wagmi': {
     testIgnore: /(?:email\.spec\.ts|smart-account\.spec\.ts).*$/u
   },
@@ -51,17 +55,17 @@ const customProjectProperties: CustomProjectProperties = {
   },
   // Exclude email.spec.ts, siwe.spec.ts, and canary.spec.ts from solana, not yet implemented
   'Desktop Chrome/solana': {
-    grep: /^(?!.*(?:email\.spec\.ts|siwe\.spec\.ts|canary\.spec\.ts|smart-account\.spec\.ts|wallet\.spec\.ts)).*$/u
+    grep: /^(?!.*(?:email\.spec\.ts|siwe\.spec\.ts|canary\.spec\.ts|smart-account\.spec\.ts)).*$/u
   },
   'Desktop Brave/solana': {
     useOptions: braveOptions,
-    grep: /^(?!.*(?:email\.spec\.ts|siwe\.spec\.ts|canary\.spec\.ts|smart-account\.spec\.ts|wallet\.spec\.ts)).*$/u
+    grep: /^(?!.*(?:email\.spec\.ts|siwe\.spec\.ts|canary\.spec\.ts|smart-account\.spec\.ts)).*$/u
   },
   'Desktop Firefox/solana': {
-    grep: /^(?!.*(?:email\.spec\.ts|siwe\.spec\.ts|canary\.spec\.ts|smart-account\.spec\.ts|wallet\.spec\.ts)).*$/u
+    grep: /^(?!.*(?:email\.spec\.ts|siwe\.spec\.ts|canary\.spec\.ts|smart-account\.spec\.ts)).*$/u
   },
   'Desktop Safari/solana': {
-    grep: /^(?!.*(?:email\.spec\.ts|siwe\.spec\.ts|canary\.spec\.ts|smart-account\.spec\.ts|wallet\.spec\.ts)).*$/u
+    grep: /^(?!.*(?:email\.spec\.ts|siwe\.spec\.ts|canary\.spec\.ts|smart-account\.spec\.ts)).*$/u
   }
 }
 

@@ -66,6 +66,9 @@ export const AppSetPreferredAccountRequest = z.object({ type: z.string() })
 export const FrameConnectEmailResponse = z.object({
   action: z.enum(['VERIFY_DEVICE', 'VERIFY_OTP'])
 })
+export const FrameUpdateEmailResponse = z.object({
+  action: z.enum(['VERIFY_PRIMARY_OTP', 'VERIFY_SECONDARY_OTP'])
+})
 export const FrameGetUserResponse = z.object({
   email: z.string().email(),
   address: z.string(),
@@ -407,7 +410,7 @@ export const W3mFrameSchema = {
 
     .or(z.object({ type: zType('FRAME_UPDATE_EMAIL_ERROR'), payload: zError }))
 
-    .or(z.object({ type: zType('FRAME_UPDATE_EMAIL_SUCCESS') }))
+    .or(z.object({ type: zType('FRAME_UPDATE_EMAIL_SUCCESS'), payload: FrameUpdateEmailResponse }))
 
     .or(z.object({ type: zType('FRAME_UPDATE_EMAIL_PRIMARY_OTP_ERROR'), payload: zError }))
 
