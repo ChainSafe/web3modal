@@ -25,15 +25,16 @@ export function Web3WriteContractTest() {
         provider: walletProvider,
         config: { defaultNetworkId: chainId }
       })
-      // Alternative to the above you can use the following:
-      // ```
-      // import { Web3 } from 'web3'
-      // ...
-      //  const web3 = new Web3({ provider: walletProvider, config: { defaultNetworkId: chainId } })
-      //  const contract = new web3.eth.Contract(constAbi, donutAddress)
-      //
-      // ```
-      // And later in the code: you may use `web3.utils.toWei(...)` instead of `toWei(...)`
+      /**
+       * Alternative to the above you can use the following:
+       * ```
+       * import { Web3 } from 'web3'
+       * ...
+       *  const web3 = new Web3({ provider: walletProvider, config: { defaultNetworkId: chainId } })
+       *  const contract = new web3.eth.Contract(constAbi, donutAddress)
+       * ```
+       * And later in the code: you may use `web3.utils.toWei(...)` instead of `toWei(...)`
+       */
 
       const tx = await contract.methods
         .purchase(1, { value: toWei('0.0001', 'ether') })

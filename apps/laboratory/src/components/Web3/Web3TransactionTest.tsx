@@ -26,14 +26,15 @@ export function Web3TransactionTest() {
         provider: walletProvider,
         config: { defaultNetworkId: chainId }
       })
-      // Alternative to the above you can use the following:
-      // ```
-      // import { Web3 } from 'web3'
-      // ...
-      // const web3 = new Web3({ provider: walletProvider, config: { defaultNetworkId: chainId } })
-      //
-      // ```
-      // And later in the code: you can use `web3.eth` instead of `web3Eth`, and `web3.utils.toWei(...)` instead of `toWei(...)`.
+      /**
+       * Alternative to the above you can use the following:
+       * ```
+       * import { Web3 } from 'web3'
+       * ...
+       * const web3 = new Web3({ provider: walletProvider, config: { defaultNetworkId: chainId } })
+       * ```
+       * And later in the code: you can use `web3.eth` instead of `web3Eth`, and `web3.utils.toWei(...)` instead of `toWei(...)`.
+       */
 
       const tx = await web3Eth.sendTransaction({
         from: address,

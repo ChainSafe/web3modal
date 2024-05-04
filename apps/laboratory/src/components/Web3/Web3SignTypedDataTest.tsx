@@ -68,14 +68,15 @@ export function Web3SignTypedDataTest() {
         provider: walletProvider,
         config: { defaultNetworkId: chainId }
       })
-      // Alternative to the above you can use the following:
-      // ```
-      // import { Web3 } from 'web3'
-      // ...
-      // const web3 = new Web3({ provider: walletProvider, config: { defaultNetworkId: chainId } })
-      //
-      // ```
-      // And later in the code: you can use `web3.eth` instead of `web3Eth`.
+      /**
+       * Alternative to the above you can use the following:
+       * ```
+       * import { Web3 } from 'web3'
+       * ...
+       * const web3 = new Web3({ provider: walletProvider, config: { defaultNetworkId: chainId } })
+       * ```
+       * And later in the code: you can use `web3.eth` instead of `web3Eth`.
+       */
 
       const signature = await web3Eth.signTypedData(address, {
         primaryType: 'Mail',

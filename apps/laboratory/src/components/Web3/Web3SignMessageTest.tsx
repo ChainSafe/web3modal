@@ -22,14 +22,15 @@ export function Web3SignMessageTest() {
         provider: walletProvider,
         config: { defaultNetworkId: chainId }
       })
-      // Alternative to the above you can use the following:
-      // ```
-      // import { Web3 } from 'web3'
-      // ...
-      // const web3 = new Web3({ provider: walletProvider, config: { defaultNetworkId: chainId } })
-      //
-      // ```
-      // And later in the code: you can use `web3.eth.personal` instead of `personal`, and `web3.utils.utf8ToHex(...)` instead of `utf8ToHex(...)`.
+      /**
+       * Alternative to the above you can use the following:
+       * ```
+       * import { Web3 } from 'web3'
+       * ...
+       * const web3 = new Web3({ provider: walletProvider, config: { defaultNetworkId: chainId } })
+       * ```
+       * And later in the code: you can use `web3.eth.personal` instead of `personal`, and `web3.utils.utf8ToHex(...)` instead of `utf8ToHex(...)`.
+       */
 
       // Sign only takes hexstrings, so turn message to hexstring
       const message = utf8ToHex('Hello Web3Modal Web3 Signer!')
