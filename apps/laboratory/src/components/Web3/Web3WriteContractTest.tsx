@@ -1,5 +1,5 @@
 import { Button, Stack, Link, Text, Spacer } from '@chakra-ui/react'
-import { useWeb3ModalAccount, useWeb3ModalProvider } from '@web3modal/web3/react'
+import { useWeb3ModalAccount, useWeb3ModalProvider } from 'web3modal-web3js/react'
 import { Contract } from 'web3-eth-contract'
 import { toWei } from 'web3-utils'
 import { optimism, sepolia } from '../../utils/ChainsUtil'
@@ -37,8 +37,8 @@ export function Web3WriteContractTest() {
        */
 
       const tx = await contract.methods
-        .purchase(1, { value: toWei('0.0001', 'ether') })
-        .send({ from: address })
+        .purchase(1)
+        .send({ from: address, value: toWei('0.0001', 'ether') })
 
       toast({
         title: 'Success',
