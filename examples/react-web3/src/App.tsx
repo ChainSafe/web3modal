@@ -7,8 +7,8 @@ import {
   defaultConfig
 } from '@web3modal/web3/react';
 
-// @ts-expect-error 1. Get projectId 
-const projectId = import.meta.env.VITE_PROJECT_ID
+// @ts-expect-error 1. Get projectId from vite or next
+const projectId = import.meta.env.PROJECT_ID
 if (!projectId) {
   throw new Error('VITE_PROJECT_ID is not set')
 }

@@ -3,11 +3,11 @@ import {
   defaultConfig
 } from 'web3modal-web3js';
 
-// @ts-expect-error 1. Get projectId
-// const projectId = import.meta.env.VITE_PROJECT_ID
-// if (!projectId) {
-//   throw new Error('VITE_PROJECT_ID is not set')
-// }
+// @ts-expect-error 1. Get projectId from Vite or next 
+const projectId = import.meta.env.PROJECT_ID
+if (!projectId) {
+  throw new Error('VITE_PROJECT_ID is not set')
+}
 
 // 2. Set chains
 const chains = [
@@ -42,7 +42,7 @@ const web3Config = defaultConfig({
 const modal = createWeb3Modal({
   web3Config,
   chains,
-  projectId:"76804fd6127cc3b85f7d749c4e53700f",
+  projectId,
   enableAnalytics: true,
   themeMode: 'light',
   themeVariables: {
