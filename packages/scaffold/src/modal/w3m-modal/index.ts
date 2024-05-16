@@ -13,7 +13,7 @@ import { UiHelperUtil, customElement, initializeTheming } from '@web3modal/ui'
 import { LitElement, html } from 'lit'
 import { state } from 'lit/decorators.js'
 import styles from './styles.js'
-import type { CaipAddress } from '@web3modal/core'
+import type { AccountControllerState } from '@web3modal/core'
 
 // -- Helpers --------------------------------------------- //
 const SCROLL_LOCK = 'scroll-lock'
@@ -34,16 +34,13 @@ export class W3mModal extends LitElement {
 
   @state() private isSiweEnabled = OptionsController.state.isSiweEnabled
 
-  @state() private connected = AccountController.state.isConnected
-
   public constructor() {
     super()
     this.initializeTheming()
     ApiController.prefetch()
     this.unsubscribe.push(
       ModalController.subscribeKey('open', val => (val ? this.onOpen() : this.onClose())),
-      AccountController.subscribeKey('isConnected', val => (this.connected = val)),
-      AccountController.subscribeKey('caipAddress', val => this.onNewAddress(val))
+      AccountController.subscribe(newAccountState => this.onNewAccountState(newAccountState))
     )
     EventsController.sendEvent({ type: 'track', event: 'MODAL_LOADED' })
   }
@@ -64,7 +61,6 @@ export class W3mModal extends LitElement {
               <w3m-snackbar></w3m-snackbar>
             </wui-card>
           </wui-flex>
-          <w3m-tooltip></w3m-tooltip>
         `
       : null
   }
@@ -156,28 +152,30 @@ export class W3mModal extends LitElement {
     this.abortController = undefined
   }
 
-  private async onNewAddress(caipAddress?: CaipAddress) {
+  private async onNewAccountState(newState: AccountControllerState) {
+    const { isConnected, caipAddress: newCaipAddress } = newState
+
     if (this.isSiweEnabled) {
       const { SIWEController } = await import('@web3modal/siwe')
 
-      if (this.connected && !this.caipAddress) {
-        this.caipAddress = caipAddress
+      if (isConnected && !this.caipAddress) {
+        this.caipAddress = newCaipAddress
       }
-      if (this.connected && caipAddress && this.caipAddress !== caipAddress) {
+      if (isConnected && newCaipAddress && this.caipAddress !== newCaipAddress) {
         await SIWEController.signOut()
         this.onSiweNavigation()
-        this.caipAddress = caipAddress
+        this.caipAddress = newCaipAddress
       }
 
       try {
         const session = await SIWEController.getSession()
-        if (session && !this.connected) {
+        if (session && !isConnected) {
           await SIWEController.signOut()
-        } else if (this.connected && !session) {
+        } else if (isConnected && !session) {
           this.onSiweNavigation()
         }
       } catch (error) {
-        if (this.connected) {
+        if (isConnected) {
           this.onSiweNavigation()
         }
       }

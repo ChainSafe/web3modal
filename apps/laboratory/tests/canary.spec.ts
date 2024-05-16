@@ -14,7 +14,7 @@ testConnectedMW.beforeEach(async ({ modalValidator, walletValidator }) => {
   timeEnd('beforeEach expectConnection')
 })
 
-testConnectedMW.afterEach(async ({ browserName, timingRecords }, testInfo) => {
+testConnectedMW.afterEach(async ({ browserName }, testInfo) => {
   if (browserName === 'firefox') {
     return
   }
@@ -28,8 +28,7 @@ testConnectedMW.afterEach(async ({ browserName, timingRecords }, testInfo) => {
       'https://lab.web3modal.com/',
       'HappyPath.sign',
       testInfo.status === 'passed',
-      duration,
-      timingRecords
+      duration
     )
     timeEnd('uploadCanaryResultsToCloudWatch')
   }
@@ -37,19 +36,13 @@ testConnectedMW.afterEach(async ({ browserName, timingRecords }, testInfo) => {
 
 testConnectedMW(
   'it should sign',
-  async ({ modalPage, walletPage, modalValidator, walletValidator, timingRecords }) => {
+  async ({ modalPage, walletPage, modalValidator, walletValidator }) => {
     timeStart('modalPage.sign()')
     await modalPage.sign()
     timeEnd('modalPage.sign()')
-    const signRequestedTime = new Date()
     timeStart('walletValidator.expectReceivedSign')
     await walletValidator.expectReceivedSign({})
     timeEnd('walletValidator.expectReceivedSign')
-    const signReceivedTime = new Date()
-    timingRecords.push({
-      item: 'sign',
-      timeMs: signReceivedTime.getTime() - signRequestedTime.getTime()
-    })
     timeStart('walletPage.handleRequest')
     await walletPage.handleRequest({ accept: true })
     timeEnd('walletPage.handleRequest')

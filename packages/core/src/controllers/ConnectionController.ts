@@ -6,8 +6,7 @@ import type {
   Connector,
   EstimateGasTransactionArgs,
   SendTransactionArgs,
-  WcWallet,
-  WriteContractArgs
+  WcWallet
 } from '../utils/TypeUtil.js'
 import { TransactionsController } from './TransactionsController.js'
 
@@ -28,11 +27,7 @@ export interface ConnectionControllerClient {
   parseUnits: (value: string, decimals: number) => bigint
   formatUnits: (value: bigint, decimals: number) => string
   connectExternal?: (options: ConnectExternalOptions) => Promise<void>
-  reconnectExternal?: (options: ConnectExternalOptions) => Promise<void>
   checkInstalled?: (ids?: string[]) => boolean
-  writeContract: (args: WriteContractArgs) => Promise<`0x${string}` | null>
-  getEnsAddress: (value: string) => Promise<false | string>
-  getEnsAvatar: (value: string) => Promise<false | string>
 }
 
 export interface ConnectionControllerState {
@@ -93,11 +88,6 @@ export const ConnectionController = {
     StorageUtil.setConnectedConnector(options.type)
   },
 
-  async reconnectExternal(options: ConnectExternalOptions) {
-    await this._getClient().reconnectExternal?.(options)
-    StorageUtil.setConnectedConnector(options.type)
-  },
-
   async signMessage(message: string) {
     return this._getClient().signMessage(message)
   },
@@ -116,18 +106,6 @@ export const ConnectionController = {
 
   async estimateGas(args: EstimateGasTransactionArgs) {
     return this._getClient().estimateGas(args)
-  },
-
-  async writeContract(args: WriteContractArgs) {
-    return this._getClient().writeContract(args)
-  },
-
-  async getEnsAddress(value: string) {
-    return this._getClient().getEnsAddress(value)
-  },
-
-  async getEnsAvatar(value: string) {
-    return this._getClient().getEnsAvatar(value)
   },
 
   checkInstalled(ids?: string[]) {

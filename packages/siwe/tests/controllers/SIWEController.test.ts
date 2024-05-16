@@ -17,14 +17,7 @@ const client = {
   createMessage: () => 'mock-message',
   verifyMessage: async () => Promise.resolve(true),
   getSession: async () => Promise.resolve(session),
-  signOut: async () => Promise.resolve(true),
-  getMessageParams: () =>
-    Promise.resolve({
-      chains: [1],
-      domain: 'mock-domain',
-      uri: 'mock-uri',
-      nonce: 'mock-nonce'
-    })
+  signOut: async () => Promise.resolve(true)
 }
 
 // -- Tests --------------------------------------------------------------------

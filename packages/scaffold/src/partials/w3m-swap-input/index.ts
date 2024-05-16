@@ -30,7 +30,7 @@ export class W3mSwapInput extends LitElement {
 
   @property() public price = 0
 
-  @property() public marketValue?: string
+  @property() public marketValue?: string = '$1.0345,00'
 
   @property() public disabled?: boolean
 
@@ -47,7 +47,7 @@ export class W3mSwapInput extends LitElement {
   // -- Render -------------------------------------------- //
   public override render() {
     const marketValue = this.marketValue || '0'
-    const isMarketValueGreaterThanZero = NumberUtil.bigNumber(marketValue).isGreaterThan('0')
+    const isMarketValueGreaterThanZero = NumberUtil.bigNumber(marketValue).isGreaterThan(0)
 
     return html`
       <wui-flex class="${this.focused ? 'focus' : ''}" justifyContent="space-between">
@@ -69,9 +69,7 @@ export class W3mSwapInput extends LitElement {
             placeholder="0"
           />
           <wui-text class="market-value" variant="small-400" color="fg-200">
-            ${isMarketValueGreaterThanZero
-              ? `$${UiHelperUtil.formatNumberToLocalString(this.marketValue, 3)}`
-              : null}
+            ${isMarketValueGreaterThanZero ? `$${this.marketValue}` : null}
           </wui-text>
         </wui-flex>
         ${this.templateTokenSelectButton()}

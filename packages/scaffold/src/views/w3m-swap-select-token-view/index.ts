@@ -17,13 +17,7 @@ export class W3mSwapSelectTokenView extends LitElement {
 
   @state() private sourceToken = SwapController.state.sourceToken
 
-  @state() private sourceTokenAmount = SwapController.state.sourceTokenAmount
-
   @state() private toToken = SwapController.state.toToken
-
-  @state() private myTokensWithBalance = SwapController.state.myTokensWithBalance
-
-  @state() private popularTokens = SwapController.state.popularTokens
 
   @state() private searchValue = ''
 
@@ -36,10 +30,11 @@ export class W3mSwapSelectTokenView extends LitElement {
         SwapController.subscribe(newState => {
           this.sourceToken = newState.sourceToken
           this.toToken = newState.toToken
-          this.myTokensWithBalance = newState.myTokensWithBalance
         })
       ]
     )
+
+    this.watchTokens()
   }
 
   public override updated() {
@@ -76,14 +71,18 @@ export class W3mSwapSelectTokenView extends LitElement {
   }
 
   // -- Private ------------------------------------------- //
+  private watchTokens() {
+    this.interval = setInterval(() => {
+      SwapController.getNetworkTokenPrice()
+      SwapController.getMyTokensWithBalance()
+    }, 5000)
+  }
+
   private onSelectToken(token: SwapTokenWithBalance) {
     if (this.targetToken === 'sourceToken') {
       SwapController.setSourceToken(token)
     } else {
       SwapController.setToToken(token)
-      if (this.sourceToken && this.sourceTokenAmount) {
-        SwapController.swapTokens()
-      }
     }
     RouterController.goBack()
   }
@@ -104,8 +103,10 @@ export class W3mSwapSelectTokenView extends LitElement {
   }
 
   private templateTokens() {
-    const yourTokens = this.myTokensWithBalance ? Object.values(this.myTokensWithBalance) : []
-    const tokens = this.popularTokens ? this.popularTokens : []
+    const yourTokens = SwapController.state.myTokensWithBalance
+      ? Object.values(SwapController.state.myTokensWithBalance)
+      : []
+    const tokens = SwapController.state.popularTokens ? SwapController.state.popularTokens : []
 
     const filteredYourTokens: SwapTokenWithBalance[] = this.filterTokensWithText<
       SwapTokenWithBalance[]

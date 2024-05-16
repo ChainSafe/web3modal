@@ -4,7 +4,6 @@ import styles from './styles.js'
 import { property } from 'lit/decorators.js'
 import { RouterController, SendController } from '@web3modal/core'
 import type { Balance } from '@web3modal/common'
-import { NumberUtil } from '@web3modal/common'
 
 @customElement('w3m-input-token')
 export class W3mInputToken extends LitElement {
@@ -14,8 +13,6 @@ export class W3mInputToken extends LitElement {
   @property({ type: Object }) public token?: Balance
 
   @property({ type: Number }) public sendTokenAmount?: number
-
-  @property({ type: Number }) public gasPriceInUSD?: number
 
   // -- Render -------------------------------------------- //
   public override render() {
@@ -69,11 +66,7 @@ export class W3mInputToken extends LitElement {
       const price = this.token.price
       const totalValue = price * this.sendTokenAmount
 
-      return html`<wui-text class="totalValue" variant="small-400" color="fg-200"
-        >${totalValue
-          ? `$${UiHelperUtil.formatNumberToLocalString(totalValue, 2)}`
-          : 'Incorrect value'}</wui-text
-      >`
+      return html`<wui-text variant="small-400" color="fg-200">$${totalValue.toFixed(2)}</wui-text>`
     }
 
     return null
@@ -112,18 +105,8 @@ export class W3mInputToken extends LitElement {
   }
 
   private onMaxClick() {
-    if (this.token && this.gasPriceInUSD) {
-      const amountOfTokenGasRequires = NumberUtil.bigNumber(
-        this.gasPriceInUSD.toFixed(5)
-      ).dividedBy(this.token.price)
-
-      const isNetworkToken = this.token.address === undefined
-
-      const maxValue = isNetworkToken
-        ? NumberUtil.bigNumber(this.token.quantity.numeric).minus(amountOfTokenGasRequires)
-        : NumberUtil.bigNumber(this.token.quantity.numeric)
-
-      SendController.setTokenAmount(Number(maxValue.toFixed(20)))
+    if (this.token) {
+      SendController.setTokenAmount(Number(this.token?.quantity.numeric))
     }
   }
 

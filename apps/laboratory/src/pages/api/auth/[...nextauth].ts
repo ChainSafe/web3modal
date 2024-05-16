@@ -1,12 +1,10 @@
+import type { SIWESession } from '@web3modal/siwe'
 import type { NextApiRequest, NextApiResponse } from 'next'
 import nextAuth from 'next-auth'
 import credentialsProvider from 'next-auth/providers/credentials'
-import {
-  type SIWESession,
-  verifySignature,
-  getChainIdFromMessage,
-  getAddressFromMessage
-} from '@web3modal/siwe'
+import { getCsrfToken } from 'next-auth/react'
+import { SiweMessage } from 'siwe'
+import { ethers } from 'ethers'
 
 declare module 'next-auth' {
   interface Session extends SIWESession {
@@ -14,6 +12,7 @@ declare module 'next-auth' {
     chainId: number
   }
 }
+
 /*
  * For more information on each option (and a full list of options) go to
  * https://next-auth.js.org/configuration/options
@@ -48,15 +47,22 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
           if (!credentials?.message) {
             throw new Error('SiweMessage is undefined')
           }
-          const { message, signature } = credentials
-          const address = getAddressFromMessage(message)
-          const chainId = getChainIdFromMessage(message)
+          const siwe = new SiweMessage(credentials.message)
+          const provider = new ethers.JsonRpcProvider(
+            `https://rpc.walletconnect.com/v1?chainId=eip155:${siwe.chainId}&projectId=${projectId}`
+          )
+          const nonce = await getCsrfToken({ req: { headers: req.headers } })
+          const result = await siwe.verify(
+            {
+              signature: credentials?.signature || '',
+              nonce
+            },
+            { provider }
+          )
 
-          const isValid = await verifySignature({ address, message, signature, chainId, projectId })
-
-          if (isValid) {
+          if (result.success) {
             return {
-              id: `${chainId}:${address}`
+              id: `eip155:${siwe.chainId}:${siwe.address}`
             }
           }
 

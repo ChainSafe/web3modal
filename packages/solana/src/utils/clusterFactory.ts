@@ -62,7 +62,7 @@ export function unregisterListener(id: number) {
   const unsubscribeMethod = method.replace('Subscribe', 'Unsubscribe')
 
   if (!socket) {
-    throw new Error('Socket not initialized')
+    throw new Error('Socket not initalized')
   }
 
   socket.send(

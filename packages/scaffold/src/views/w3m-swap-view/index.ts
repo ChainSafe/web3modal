@@ -1,4 +1,4 @@
-import { customElement } from '@web3modal/ui'
+import { UiHelperUtil, customElement } from '@web3modal/ui'
 import { LitElement, html } from 'lit'
 import { state } from 'lit/decorators.js'
 import styles from './styles.js'
@@ -53,27 +53,26 @@ export class W3mSwapView extends LitElement {
 
   @state() private maxSlippage = SwapController.state.maxSlippage
 
-  @state() private providerFee = SwapController.state.providerFee
-
   @state() private transactionLoading = SwapController.state.transactionLoading
-
-  @state() private networkTokenSymbol = SwapController.state.networkTokenSymbol
 
   // -- Lifecycle ----------------------------------------- //
   public constructor() {
     super()
+
     NetworkController.subscribeKey('caipNetwork', newCaipNetwork => {
       if (this.caipNetworkId !== newCaipNetwork?.id) {
         this.caipNetworkId = newCaipNetwork?.id
-        SwapController.resetState()
+        SwapController.resetTokens()
+        SwapController.resetValues()
         SwapController.initializeState()
       }
     })
+
     this.unsubscribe.push(
       ...[
         ModalController.subscribeKey('open', isOpen => {
           if (!isOpen) {
-            SwapController.resetState()
+            SwapController.resetValues()
           }
         }),
         RouterController.subscribeKey('view', newRoute => {
@@ -96,20 +95,21 @@ export class W3mSwapView extends LitElement {
           this.gasPriceInUSD = newState.gasPriceInUSD
           this.priceImpact = newState.priceImpact
           this.maxSlippage = newState.maxSlippage
-          this.providerFee = newState.providerFee
         })
       ]
     )
+
+    this.watchTokensAndValues()
   }
 
   public override firstUpdated() {
-    SwapController.initializeState()
-    setTimeout(() => {
-      this.watchTokensAndValues()
-    }, 10_000)
+    if (!this.initialized) {
+      SwapController.initializeState()
+    }
   }
 
   public override disconnectedCallback() {
+    SwapController.setLoading(false)
     this.unsubscribe.forEach(unsubscribe => unsubscribe?.())
     clearInterval(this.interval)
   }
@@ -129,7 +129,7 @@ export class W3mSwapView extends LitElement {
       SwapController.getNetworkTokenPrice()
       SwapController.getMyTokensWithBalance()
       SwapController.refreshSwapValues()
-    }, 10_000)
+    }, 20000)
   }
 
   private templateSwap() {
@@ -161,23 +161,26 @@ export class W3mSwapView extends LitElement {
   }
 
   private templateLoading() {
-    return html`
-      <wui-flex flexDirection="column" gap="l">
-        <wui-flex flexDirection="column" alignItems="center" gap="xs" class="swap-inputs-container">
-          <w3m-swap-input-skeleton target="sourceToken"></w3m-swap-input-skeleton>
-          <w3m-swap-input-skeleton target="toToken"></w3m-swap-input-skeleton>
-          <wui-shimmer
-            class="replace-tokens-button-shimmer"
-            width="40px"
-            height="40px"
-            borderRadius="xxs"
-            variant="light"
-          >
-            <wui-icon name="recycleHorizontal" color="fg-250" size="lg"></wui-icon>
-          </wui-shimmer>
-        </wui-flex>
-      </wui-flex>
-    `
+    return html`<wui-flex
+      flexGrow="1"
+      flexDirection="column"
+      justifyContent="center"
+      alignItems="center"
+      .padding=${['3xl', 'xl', '3xl', 'xl'] as const}
+      gap="xl"
+    >
+      <wui-icon-box
+        backgroundColor="glass-005"
+        background="gray"
+        iconColor="fg-200"
+        icon="swapHorizontalRoundedBold"
+        size="lg"
+        ?border=${true}
+        borderColor="wui-color-bg-125"
+      ></wui-icon-box>
+
+      <wui-loading-hexagon></wui-loading-hexagon>
+    </wui-flex>`
   }
 
   private templateTokenInput(target: SwapInputTarget, token?: SwapToken) {
@@ -200,7 +203,7 @@ export class W3mSwapView extends LitElement {
       .token=${token}
       .balance=${myToken?.quantity?.numeric}
       .price=${this.sourceTokenPriceInUSD}
-      .marketValue=${value}
+      .marketValue=${isNaN(value) ? '' : UiHelperUtil.formatNumberToLocalString(value)}
       .onSetMaxValue=${this.onSetMaxValue.bind(this)}
     ></w3m-swap-input>`
   }
@@ -236,7 +239,7 @@ export class W3mSwapView extends LitElement {
   }
 
   private templateDetails() {
-    if (this.inputError) {
+    if (this.loading || this.inputError) {
       return null
     }
 
@@ -244,7 +247,7 @@ export class W3mSwapView extends LitElement {
       return null
     }
 
-    const toTokenSwappedAmount =
+    const toTokenSwapedAmount =
       this.sourceTokenPriceInUSD && this.toTokenPriceInUSD
         ? (1 / this.toTokenPriceInUSD) * this.sourceTokenPriceInUSD
         : 0
@@ -255,14 +258,11 @@ export class W3mSwapView extends LitElement {
         sourceTokenSymbol=${this.sourceToken?.symbol}
         sourceTokenPrice=${this.sourceTokenPriceInUSD}
         toTokenSymbol=${this.toToken?.symbol}
-        toTokenSwappedAmount=${toTokenSwappedAmount}
-        toTokenAmount=${this.toTokenAmount}
+        toTokenSwapedAmount=${toTokenSwapedAmount}
         gasPriceInUSD=${this.gasPriceInUSD}
         .priceImpact=${this.priceImpact}
         slippageRate=${ConstantsUtil.CONVERT_SLIPPAGE_TOLERANCE}
         .maxSlippage=${this.maxSlippage}
-        providerFee=${this.providerFee}
-        networkTokenSymbol=${this.networkTokenSymbol}
       ></w3m-swap-details>
     `
   }
@@ -280,7 +280,6 @@ export class W3mSwapView extends LitElement {
   private templateActionButton() {
     const haveNoTokenSelected = !this.toToken || !this.sourceToken
     const loading = this.loading || this.loadingPrices || this.transactionLoading
-    const disabled = loading || haveNoTokenSelected || this.inputError
 
     return html` <wui-flex gap="xs">
       <wui-button
@@ -290,7 +289,7 @@ export class W3mSwapView extends LitElement {
         borderRadius="xs"
         variant=${haveNoTokenSelected ? 'shade' : 'fill'}
         .loading=${loading}
-        .disabled=${disabled}
+        .disabled=${loading || haveNoTokenSelected || this.inputError}
         @click=${this.onSwapPreview}
       >
         ${this.actionButtonLabel()}
@@ -300,7 +299,7 @@ export class W3mSwapView extends LitElement {
 
   private onDebouncedGetSwapCalldata = CoreHelperUtil.debounce(async () => {
     await SwapController.swapTokens()
-  }, 200)
+  }, 500)
 
   private onSwitchTokens() {
     SwapController.switchTokens()

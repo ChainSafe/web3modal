@@ -58,7 +58,6 @@ export interface RouterControllerState {
     email?: string
     newEmail?: string
     target?: SwapInputTarget
-    swapUnsupportedChain?: boolean
   }
   transactionStack: TransactionAction[]
 }

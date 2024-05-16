@@ -45,7 +45,6 @@ function createRootStyles(themeVariables?: ThemeVariables) {
     core: css`
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
       :root {
-        --w3m-modal-width: 360px;
         --w3m-color-mix-strength: ${unsafeCSS(
           themeVariables?.['--w3m-color-mix-strength']
             ? `${themeVariables['--w3m-color-mix-strength']}%`

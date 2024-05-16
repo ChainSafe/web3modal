@@ -37,9 +37,6 @@ jobs:
 
   code_style:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
     strategy:
       matrix:
         style-command:
@@ -101,8 +98,5 @@ jobs:
   ui-test:
     uses: ./.github/workflows/ui_tests.yml
     secrets: inherit
-    permissions:
-      contents: write
-      pull-requests: write
     with:
       branch: ${{ github.ref }}

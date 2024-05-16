@@ -3,7 +3,6 @@ import {
   type MetricDatum,
   type PutMetricDataCommandInput
 } from '@aws-sdk/client-cloudwatch'
-import type { TimingRecords } from '../fixtures/timing-fixture'
 
 // eslint-disable-next-line func-style
 export const uploadCanaryResultsToCloudWatch = async (
@@ -12,57 +11,63 @@ export const uploadCanaryResultsToCloudWatch = async (
   target: string,
   metricsPrefix: string,
   isTestPassed: boolean,
-  testDurationMs: number,
-  timingRecords: TimingRecords
+  testDurationMs: number
   // eslint-disable-next-line max-params
 ) => {
   const cloudwatch = new CloudWatch({ region: 'eu-central-1' })
-  const Dimensions = [
-    {
-      Name: 'Target',
-      Value: target
-    },
-    {
-      Name: 'Region',
-      Value: region
-    }
-  ]
-  const Timestamp = new Date()
+  const ts = new Date()
   const metrics: MetricDatum[] = [
     {
       MetricName: `${metricsPrefix}.success`,
-      Dimensions,
+      Dimensions: [
+        {
+          Name: 'Target',
+          Value: target
+        },
+        {
+          Name: 'Region',
+          Value: region
+        }
+      ],
       Unit: 'Count',
       Value: isTestPassed ? 1 : 0,
-      Timestamp
+      Timestamp: ts
     },
     {
       MetricName: `${metricsPrefix}.failure`,
-      Dimensions,
+      Dimensions: [
+        {
+          Name: 'Target',
+          Value: target
+        },
+        {
+          Name: 'Region',
+          Value: region
+        }
+      ],
       Unit: 'Count',
       Value: isTestPassed ? 0 : 1,
-      Timestamp
+      Timestamp: ts
     }
   ]
 
   if (isTestPassed) {
     metrics.push({
       MetricName: `${metricsPrefix}.latency`,
-      Dimensions,
+      Dimensions: [
+        {
+          Name: 'Target',
+          Value: target
+        },
+        {
+          Name: 'Region',
+          Value: region
+        }
+      ],
       Unit: 'Milliseconds',
       Value: testDurationMs,
-      Timestamp
+      Timestamp: ts
     })
-
-    for (const record of timingRecords) {
-      metrics.push({
-        MetricName: `${metricsPrefix}.timing.${record.item}`,
-        Dimensions,
-        Unit: 'Milliseconds',
-        Value: record.timeMs,
-        Timestamp
-      })
-    }
   }
 
   const params: PutMetricDataCommandInput = {

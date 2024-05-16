@@ -4,7 +4,6 @@ import styles from './styles.js'
 import {
   AccountController,
   CoreHelperUtil,
-  NetworkController,
   RouterController,
   SendController
 } from '@web3modal/core'
@@ -23,8 +22,6 @@ export class W3mSendSelectTokenView extends LitElement {
   @state() private tokenBalance = AccountController.state.tokenBalance
 
   @state() private tokens?: Balance[]
-
-  @state() private filteredTokens?: Balance[]
 
   @state() private search = ''
 
@@ -70,15 +67,12 @@ export class W3mSendSelectTokenView extends LitElement {
   }
 
   private templateTokens() {
-    this.tokens = this.tokenBalance?.filter(
-      token => token.chainId === NetworkController.state.caipNetwork?.id
-    )
     if (this.search) {
-      this.filteredTokens = this.tokenBalance?.filter(token =>
+      this.tokens = this.tokenBalance?.filter(token =>
         token.name.toLowerCase().includes(this.search.toLowerCase())
       )
     } else {
-      this.filteredTokens = this.tokens
+      this.tokens = this.tokenBalance
     }
 
     return html`
@@ -91,8 +85,8 @@ export class W3mSendSelectTokenView extends LitElement {
           <wui-text variant="paragraph-500" color="fg-200">Your tokens</wui-text>
         </wui-flex>
         <wui-flex flexDirection="column" gap="xs">
-          ${this.filteredTokens && this.filteredTokens.length > 0
-            ? this.filteredTokens.map(
+          ${this.tokens && this.tokens.length > 0
+            ? this.tokens.map(
                 token =>
                   html`<wui-list-token
                     @click=${this.handleTokenClick.bind(this, token)}

@@ -2,7 +2,6 @@ import {
   AccountController,
   AssetUtil,
   ConnectionController,
-  ConstantsUtil,
   CoreHelperUtil,
   EventsController,
   ModalController,
@@ -23,9 +22,6 @@ import styles from './styles.js'
 export class W3mUnsupportedChainView extends LitElement {
   public static override styles = styles
 
-  // -- Members ------------------------------------------- //
-  protected readonly swapUnsupportedChain = RouterController.state.data?.swapUnsupportedChain
-
   // -- State & Properties --------------------------------- //
   @state() private disconecting = false
 
@@ -40,7 +36,10 @@ export class W3mUnsupportedChainView extends LitElement {
           alignItems="center"
           gap="xl"
         >
-          ${this.descriptionTemplate()}
+          <wui-text variant="small-400" color="fg-200" align="center">
+            This app doesn’t support your current network. Switch to an available option following
+            to continue.
+          </wui-text>
         </wui-flex>
 
         <wui-flex flexDirection="column" padding="s" gap="xs">
@@ -66,22 +65,6 @@ export class W3mUnsupportedChainView extends LitElement {
   }
 
   // -- Private ------------------------------------------- //
-  private descriptionTemplate() {
-    if (this.swapUnsupportedChain) {
-      return html`
-        <wui-text variant="small-400" color="fg-200" align="center">
-          The swap feature doesn’t support your current network. Switch to an available option to
-          continue.
-        </wui-text>
-      `
-    }
-
-    return html`
-      <wui-text variant="small-400" color="fg-200" align="center">
-        This app doesn’t support your current network. Switch to an available option to continue.
-      </wui-text>
-    `
-  }
 
   private networksTemplate() {
     const { approvedCaipNetworkIds, requestedCaipNetworks } = NetworkController.state
@@ -91,11 +74,7 @@ export class W3mUnsupportedChainView extends LitElement {
       requestedCaipNetworks
     )
 
-    const filteredNetworks = this.swapUnsupportedChain
-      ? sortedNetworks.filter(network => ConstantsUtil.SWAP_SUPPORTED_NETWORKS.includes(network.id))
-      : sortedNetworks
-
-    return filteredNetworks.map(
+    return sortedNetworks.map(
       network => html`
         <wui-list-network
           imageSrc=${ifDefined(AssetUtil.getNetworkImage(network))}

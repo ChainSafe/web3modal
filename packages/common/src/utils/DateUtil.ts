@@ -1,18 +1,15 @@
 import dayjs from 'dayjs'
-import englishLocale from 'dayjs/locale/en'
-import relativeTime from 'dayjs/plugin/relativeTime.js'
 import updateLocale from 'dayjs/plugin/updateLocale.js'
+import relativeTime from 'dayjs/plugin/relativeTime.js'
 
 dayjs.extend(relativeTime)
 dayjs.extend(updateLocale)
 
-const localeObject = {
-  ...englishLocale,
-  name: 'en-web3-modal',
+dayjs.updateLocale('en', {
   relativeTime: {
     future: 'in %s',
     past: '%s ago',
-    s: '%d sec',
+    s: '%s sec',
     m: '1 min',
     mm: '%d min',
     h: '1 hr',
@@ -24,9 +21,7 @@ const localeObject = {
     y: '1 yr',
     yy: '%d yr'
   }
-}
-
-dayjs.locale('en-web3-modal', localeObject)
+})
 
 export const DateUtil = {
   getYear(date: string = new Date().toISOString()) {
@@ -34,7 +29,7 @@ export const DateUtil = {
   },
 
   getRelativeDateFromNow(date: string | number) {
-    return dayjs(date).locale('en-web3-modal').fromNow(true)
+    return dayjs(date).fromNow(true)
   },
 
   formatDate(date: string | number, format = 'DD MMM') {

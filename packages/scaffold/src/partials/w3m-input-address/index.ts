@@ -2,7 +2,7 @@ import { customElement } from '@web3modal/ui'
 import { LitElement, html } from 'lit'
 import styles from './styles.js'
 import { property, state } from 'lit/decorators.js'
-import { ConnectionController, CoreHelperUtil, SendController } from '@web3modal/core'
+import { SendController } from '@web3modal/core'
 import { createRef, ref } from 'lit/directives/ref.js'
 import type { Ref } from 'lit/directives/ref.js'
 
@@ -16,14 +16,12 @@ export class W3mInputAddress extends LitElement {
   public instructionElementRef: Ref<HTMLElement> = createRef()
 
   // -- State & Properties -------------------------------- //
-  @property() public value?: string
+  @property() public receiverAddress?: string
 
-  @state() private instructionHidden = Boolean(this.value)
-
-  @state() private pasting = false
+  @state() private instructionHidden = Boolean(this.receiverAddress)
 
   protected override firstUpdated() {
-    if (this.value) {
+    if (this.receiverAddress) {
       this.instructionHidden = true
     }
     this.checkHidden()
@@ -61,10 +59,10 @@ export class W3mInputAddress extends LitElement {
         ${ref(this.inputElementRef)}
         @input=${this.onInputChange.bind(this)}
         @blur=${this.onBlur.bind(this)}
-        .value=${this.value ?? ''}
+        .value=${this.receiverAddress ?? ''}
         autocomplete="off"
       >
-${this.value ?? ''}</textarea
+${this.receiverAddress ?? ''}</textarea
       >
     </wui-flex>`
   }
@@ -107,13 +105,13 @@ ${this.value ?? ''}</textarea
   }
 
   private onBoxClick() {
-    if (!this.value && !this.instructionHidden) {
+    if (!this.receiverAddress && !this.instructionHidden) {
       this.focusInput()
     }
   }
 
   private onBlur() {
-    if (!this.value && this.instructionHidden && !this.pasting) {
+    if (!this.receiverAddress && this.instructionHidden) {
       this.focusInstruction()
     }
   }
@@ -125,42 +123,19 @@ ${this.value ?? ''}</textarea
   }
 
   private async onPasteClick() {
-    this.pasting = true
-
     const text = await navigator.clipboard.readText()
     SendController.setReceiverAddress(text)
   }
 
   private onInputChange(e: InputEvent) {
-    this.pasting = false
-
     const element = e.target as HTMLInputElement
 
     if (element.value && !this.instructionHidden) {
       this.focusInput()
     }
-    SendController.setLoading(true)
-    this.onDebouncedSearch(element.value)
+
+    SendController.setReceiverAddress(element.value)
   }
-
-  private onDebouncedSearch = CoreHelperUtil.debounce(async (value: string) => {
-    const address = await ConnectionController.getEnsAddress(value)
-    SendController.setLoading(false)
-
-    if (address) {
-      SendController.setReceiverProfileName(value)
-      SendController.setReceiverAddress(address)
-      const avatar = await ConnectionController.getEnsAvatar(value)
-
-      if (avatar) {
-        SendController.setReceiverProfileImageUrl(avatar)
-      }
-    } else {
-      SendController.setReceiverAddress(value)
-      SendController.setReceiverProfileName(undefined)
-      SendController.setReceiverProfileImageUrl(undefined)
-    }
-  })
 }
 
 declare global {

@@ -4,7 +4,6 @@ import { createWeb3Modal, defaultConfig } from '@web3modal/ethers/react'
 import { ThemeStore } from '../../utils/StoreUtil'
 import { EthersConstants } from '../../utils/EthersConstants'
 import { ConstantsUtil } from '../../utils/ConstantsUtil'
-import { EthersModalInfo } from '../../components/Ethers/EthersModalInfo'
 
 const modal = createWeb3Modal({
   ethersConfig: defaultConfig({
@@ -28,7 +27,6 @@ export default function Ethers() {
   return (
     <>
       <Web3ModalButtons />
-      <EthersModalInfo />
       <EthersTests />
     </>
   )

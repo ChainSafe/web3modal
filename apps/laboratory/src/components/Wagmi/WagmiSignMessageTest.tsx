@@ -10,15 +10,13 @@ export function WagmiSignMessageTest() {
   const { signMessageAsync } = useSignMessage()
   const { status } = useAccount()
   const isConnected = status === 'connected'
-  const [signature, setSignature] = React.useState<string | undefined>()
 
   async function onSignMessage() {
     try {
-      const sig = await signMessageAsync({ message: 'Hello Web3Modal!' })
-      setSignature(sig)
+      const signature = await signMessageAsync({ message: 'Hello Web3Modal!' })
       toast({
         title: ConstantsUtil.SigningSucceededToastTitle,
-        description: sig,
+        description: signature,
         type: 'success'
       })
     } catch {
@@ -31,13 +29,8 @@ export function WagmiSignMessageTest() {
   }
 
   return (
-    <>
-      <Button data-testid="sign-message-button" onClick={onSignMessage} isDisabled={!isConnected}>
-        Sign Message
-      </Button>
-      <div data-testid="w3m-signature" hidden>
-        {signature}
-      </div>
-    </>
+    <Button data-testid="sign-message-button" onClick={onSignMessage} isDisabled={!isConnected}>
+      Sign Message
+    </Button>
   )
 }

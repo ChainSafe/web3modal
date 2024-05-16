@@ -5,9 +5,8 @@ import { BASE_URL } from '../constants'
 import { doActionAndWaitForNewPage } from '../utils/actions'
 import { Email } from '../utils/email'
 import { DeviceRegistrationPage } from './DeviceRegistrationPage'
-import type { TimingRecords } from '../fixtures/timing-fixture'
 
-export type ModalFlavor = 'default' | 'siwe' | 'email' | 'wallet' | 'all'
+export type ModalFlavor = 'default' | 'siwe' | 'email' | 'wallet'
 
 export class ModalPage {
   private readonly baseURL = BASE_URL
@@ -39,7 +38,7 @@ export class ModalPage {
     return value!
   }
 
-  async getConnectUri(timingRecords?: TimingRecords): Promise<string> {
+  async getConnectUri(): Promise<string> {
     await this.page.goto(this.url)
     await this.connectButton.click()
     const connect = this.page.getByTestId('wallet-selector-walletconnect')
@@ -48,22 +47,12 @@ export class ModalPage {
       timeout: 5000
     })
     await connect.click()
-    const qrLoadInitiatedTime = new Date()
 
     // Using getByTestId() doesn't work on my machine, I'm guessing because this element is inside of a <slot>
     const qrCode = this.page.locator('wui-qr-code')
     await expect(qrCode).toBeVisible()
 
-    const uri = this.assertDefined(await qrCode.getAttribute('uri'))
-    const qrLoadedTime = new Date()
-    if (timingRecords) {
-      timingRecords.push({
-        item: 'qrLoad',
-        timeMs: qrLoadedTime.getTime() - qrLoadInitiatedTime.getTime()
-      })
-    }
-
-    return uri
+    return this.assertDefined(await qrCode.getAttribute('uri'))
   }
 
   async emailFlow(
@@ -71,6 +60,8 @@ export class ModalPage {
     context: BrowserContext,
     mailsacApiKey: string
   ): Promise<void> {
+    await this.load()
+
     this.emailAddress = emailAddress
 
     const email = new Email(mailsacApiKey)
@@ -111,6 +102,7 @@ export class ModalPage {
   }
 
   async loginWithEmail(email: string) {
+    await this.page.goto(this.url)
     // Connect Button doesn't have a proper `disabled` attribute so we need to wait for the button to change the text
     await this.page
       .getByTestId('connect-button')
@@ -170,9 +162,7 @@ export class ModalPage {
   }
 
   async sign() {
-    const signButton = this.page.getByTestId('sign-message-button')
-    await signButton.scrollIntoViewIfNeeded()
-    await signButton.click()
+    await this.page.getByTestId('sign-message-button').click()
   }
 
   async signatureRequestFrameShouldVisible() {
@@ -212,9 +202,6 @@ export class ModalPage {
 
   async promptSiwe() {
     const siweSign = this.page.getByTestId('w3m-connecting-siwe-sign')
-    await expect(siweSign, 'Siwe prompt sign button should be visible').toBeVisible({
-      timeout: 10_000
-    })
     await expect(siweSign, 'Siwe prompt sign button should be enabled').toBeEnabled()
     await siweSign.click()
   }

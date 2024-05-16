@@ -63,7 +63,7 @@ export const ConstantsUtil = {
 
   WC_COINBASE_ONRAMP_APP_ID: 'bf18c88d-495a-463b-b249-0b9d3656cf5e',
 
-  SWAP_SUGGESTED_TOKENS: [
+  SUGGESTED_TOKENS: [
     'ETH',
     'UNI',
     '1INCH',
@@ -93,7 +93,7 @@ export const ConstantsUtil = {
     'OP'
   ],
 
-  SWAP_POPULAR_TOKENS: [
+  POPULAR_TOKENS: [
     'ETH',
     'UNI',
     '1INCH',
@@ -121,8 +121,7 @@ export const ConstantsUtil = {
     'ENS',
     'MATIC',
     'OP',
-
-    'METAL',
+    // Some Polygon tokens
     'DAI',
     'CHAMP',
     'WOLF',
@@ -152,33 +151,6 @@ export const ConstantsUtil = {
     'OX_OLD',
     'DE',
     'WNT'
-  ],
-
-  SWAP_SUPPORTED_NETWORKS: [
-    // Ethereum'
-    'eip155:1',
-    // Arbitrum One'
-    'eip155:42161',
-    // Optimism'
-    'eip155:10',
-    // ZKSync Era'
-    'eip155:324',
-    // Base'
-    'eip155:8453',
-    // BNB Smart Chain'
-    'eip155:56',
-    // Polygon'
-    'eip155:137',
-    // Gnosis'
-    'eip155:100',
-    // Avalanche'
-    'eip155:43114',
-    // Fantom'
-    'eip155:250',
-    // Klaytn'
-    'eip155:8217',
-    // Aurora
-    'eip155:1313161554'
   ],
 
   NATIVE_TOKEN_ADDRESS: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
